@@ -1,0 +1,36 @@
+PODS:
+  - Expecta (0.3.2)
+  - Expecta+Snapshots (1.3.1):
+    - Expecta
+    - FBSnapshotTestCase
+  - FBSnapshotTestCase (1.5)
+  - FSCSwipeCell (0.1.0)
+  - Specta (0.3.0.beta1)
+
+DEPENDENCIES:
+  - Expecta
+  - Expecta+Snapshots
+  - FBSnapshotTestCase
+  - FSCSwipeCell (from `../`)
+  - Specta (from `https://github.com/specta/specta.git`, tag `v0.3.0.beta1`)
+
+EXTERNAL SOURCES:
+  FSCSwipeCell:
+    :path: ../
+  Specta:
+    :git: https://github.com/specta/specta.git
+    :tag: v0.3.0.beta1
+
+CHECKOUT OPTIONS:
+  Specta:
+    :git: https://github.com/specta/specta.git
+    :tag: v0.3.0.beta1
+
+SPEC CHECKSUMS:
+  Expecta: ee641011fe10aa1855d487b40e4976dac50ec342
+  Expecta+Snapshots: 4a56b9411c6ed156987072e52c39de67d864015a
+  FBSnapshotTestCase: e2914fbaabccea1dcc773d6a16b1c24540642488
+  FSCSwipeCell: 1f618578428d4b9257fcc06bbe1445712d3271b0
+  Specta: d2158a483ad179e5f8d3a29f75ff4fc0ff6fab16
+
+COCOAPODS: 0.36.0.beta.2
