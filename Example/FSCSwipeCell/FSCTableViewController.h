@@ -1,5 +1,7 @@
 #import <UIKit/UIKit.h>
 
-@interface FSCTableViewController : UITableViewController
+#import "FSCSwipeCell/FSCSwipeCell.h"
+
+@interface FSCTableViewController : UITableViewController <FSCSwipeCellDelegate>
 
 @end

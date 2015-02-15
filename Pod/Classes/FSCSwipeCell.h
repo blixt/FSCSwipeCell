@@ -5,10 +5,10 @@
 /**
  * Refers to a particular side of a cell.
  */
-typedef NS_ENUM(NSUInteger, FSCSwipeCellSide) {
-    FSCSwipeCellSideNone,
-    FSCSwipeCellSideLeft,
-    FSCSwipeCellSideRight,
+typedef NS_ENUM(NSInteger, FSCSwipeCellSide) {
+    FSCSwipeCellSideNone = 0,
+    FSCSwipeCellSideLeft = -1,
+    FSCSwipeCellSideRight = 1,
 };
 
 /**
@@ -36,9 +36,10 @@ extern CGFloat const kFSCSwipeCellOpenVelocityThreshold;
 @protocol FSCSwipeCellDelegate <NSObject>
 
 @optional
-- (void)swipeCell:(FSCSwipeCell *)cell didChangeCurrentSide:(FSCSwipeCellSide)newSide;
+- (void)swipeCell:(FSCSwipeCell *)cell didScroll:(CGFloat)distance side:(FSCSwipeCellSide)side;
 - (BOOL)swipeCell:(FSCSwipeCell *)cell shouldChangeCurrentSide:(FSCSwipeCellSide)newSide;
 - (void)swipeCell:(FSCSwipeCell *)cell willShowSide:(FSCSwipeCellSide)side;
+- (void)swipeCellDidChangeCurrentSide:(FSCSwipeCell *)cell;
 
 @end
 
@@ -52,10 +53,12 @@ extern CGFloat const kFSCSwipeCellOpenVelocityThreshold;
  */
 @interface FSCSwipeCell : UITableViewCell <UIScrollViewDelegate>
 
-@property (nonatomic, readonly) FSCSwipeCellSide currentSide;
+@property (nonatomic) FSCSwipeCellSide currentSide;
 @property (nonatomic, weak) id<FSCSwipeCellDelegate> delegate;
 @property (nonatomic, strong) UIView *leftView;
 @property (nonatomic, strong) UIView *rightView;
 @property (nonatomic, readonly, strong) UIScrollView *scrollView;
+
+- (void)setCurrentSide:(FSCSwipeCellSide)side animated:(BOOL)animated;
 
 @end
