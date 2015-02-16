@@ -122,6 +122,14 @@
     return [self.labels count];
 }
 
+#pragma mark UIScrollViewDelegate
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    for (FSCSwipeCell *cell in [self.tableView visibleCells]) {
+        cell.currentSide = FSCSwipeCellSideNone;
+    }
+}
+
 #pragma mark UITableViewDelegate
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
