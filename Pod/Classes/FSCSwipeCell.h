@@ -37,8 +37,7 @@ extern CGFloat const kFSCSwipeCellOpenVelocityThreshold;
 
 @optional
 - (void)swipeCell:(FSCSwipeCell *)cell didScroll:(CGFloat)distance side:(FSCSwipeCellSide)side;
-- (BOOL)swipeCell:(FSCSwipeCell *)cell shouldChangeCurrentSide:(FSCSwipeCellSide)newSide;
-- (void)swipeCell:(FSCSwipeCell *)cell willShowSide:(FSCSwipeCellSide)side;
+- (BOOL)swipeCell:(FSCSwipeCell *)cell shouldShowSide:(FSCSwipeCellSide)side;
 - (void)swipeCellDidChangeCurrentSide:(FSCSwipeCell *)cell;
 
 @end

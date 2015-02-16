@@ -75,12 +75,6 @@ CGFloat const kFSCSwipeCellOpenVelocityThreshold = 0.6;
         return;
     }
 
-    if ([self.delegate respondsToSelector:@selector(swipeCell:shouldChangeCurrentSide:)]) {
-        if (![self.delegate swipeCell:self shouldChangeCurrentSide:side]) {
-            return;
-        }
-    }
-
     _currentSide = side;
 
     CGPoint target = CGPointMake(self.scrollView.bounds.size.width * side, 0);
@@ -147,16 +141,23 @@ CGFloat const kFSCSwipeCellOpenVelocityThreshold = 0.6;
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     CGFloat x = scrollView.contentOffset.x;
 
+    FSCSwipeCellSide side = (x < 0 ? FSCSwipeCellSideLeft : (x > 0 ? FSCSwipeCellSideRight : FSCSwipeCellSideNone));
+    if (side != FSCSwipeCellSideNone && [self.delegate respondsToSelector:@selector(swipeCell:shouldShowSide:)]) {
+        if (![self.delegate swipeCell:self shouldShowSide:side]) {
+            // Cancel the scroll.
+            scrollView.contentOffset = CGPointZero;
+            return;
+        }
+    }
+
     if (x != 0 || scrollView.isDragging) {
         if (self.leftView) self.leftView.hidden = (x >= 0);
         if (self.rightView) self.rightView.hidden = (x <= 0);
     }
 
     if ([self.delegate respondsToSelector:@selector(swipeCell:didScroll:side:)]) {
-        if (x < 0 && self.leftView) {
-            [self.delegate swipeCell:self didScroll:-x side:FSCSwipeCellSideLeft];
-        } else if (x > 0 && self.rightView) {
-            [self.delegate swipeCell:self didScroll:x side:FSCSwipeCellSideRight];
+        if ((side == FSCSwipeCellSideLeft && self.leftView) || (side == FSCSwipeCellSideRight && self.rightView)) {
+            [self.delegate swipeCell:self didScroll:abs(x) side:side];
         }
     }
 }
