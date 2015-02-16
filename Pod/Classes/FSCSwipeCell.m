@@ -203,8 +203,6 @@ CGFloat const kFSCSwipeCellOpenVelocityThreshold = 0.6;
 
 - (void)prepareForReuse {
     [self setCurrentSide:FSCSwipeCellSideNone animated:NO];
-    self.leftView = nil;
-    self.rightView = nil;
 }
 
 #pragma mark UIView
