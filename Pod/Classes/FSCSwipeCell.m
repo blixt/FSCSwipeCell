@@ -145,20 +145,17 @@ CGFloat const kFSCSwipeCellOpenVelocityThreshold = 0.6;
 #pragma mark UIScrollViewDelegate
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-    if (!scrollView.isDragging) return;
-
     CGFloat x = scrollView.contentOffset.x;
 
-    if (self.leftView) {
-        self.leftView.hidden = (x >= 0);
-        if (x < 0 && [self.delegate respondsToSelector:@selector(swipeCell:didScroll:side:)]) {
-            [self.delegate swipeCell:self didScroll:-x side:FSCSwipeCellSideLeft];
-        }
+    if (x != 0 || scrollView.isDragging) {
+        if (self.leftView) self.leftView.hidden = (x >= 0);
+        if (self.rightView) self.rightView.hidden = (x <= 0);
     }
 
-    if (self.rightView) {
-        self.rightView.hidden = (x <= 0);
-        if (x > 0 && [self.delegate respondsToSelector:@selector(swipeCell:didScroll:side:)]) {
+    if ([self.delegate respondsToSelector:@selector(swipeCell:didScroll:side:)]) {
+        if (x < 0 && self.leftView) {
+            [self.delegate swipeCell:self didScroll:-x side:FSCSwipeCellSideLeft];
+        } else if (x > 0 && self.rightView) {
             [self.delegate swipeCell:self didScroll:x side:FSCSwipeCellSideRight];
         }
     }
