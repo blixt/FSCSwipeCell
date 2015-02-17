@@ -25,6 +25,11 @@
 - (void)viewDidLoad {
     // Create the options view which will be shared by all cells (instead of recreating it for every cell).
     self.optionsView = [[UIView alloc] init];
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(20, 0, 250, 60)];
+    label.font = [UIFont fontWithName:@"Helvetica Neue" size:13];
+    label.textColor = [UIColor whiteColor];
+    label.text = @"Imagine there are actually options here. :)";
+    [self.optionsView addSubview:label];
 
     // Create an array which contains a bunch of names that we'll use as example data.
     self.labels = [NSMutableArray arrayWithObjects:@"Pippi Longstocking", @"Austin Powers", @"Spider-Man", @"James Bond",
