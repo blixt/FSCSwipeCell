@@ -10,7 +10,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
 @interface FSCSwipeCell ()
 
-@property (nonatomic) BOOL ignoreDragging;
+@property (nonatomic) BOOL ignoreSwiping;
 @property (nonatomic) FSCSwipeCellSide lastShownSide;
 @property (nonatomic, strong) UIScrollView *scrollView;
 
@@ -144,8 +144,8 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     CGFloat x;
-    if (self.ignoreDragging) {
-        // Another view is being dragged, so counteract dragging on this one.
+    if (self.ignoreSwiping) {
+        // Another view is being swiped, so counteract swiping on this one.
         x = 0;
         [scrollView setContentOffset:CGPointZero animated:NO];
     } else {
@@ -159,7 +159,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
         if (side != FSCSwipeCellSideNone && [self.delegate respondsToSelector:@selector(swipeCell:shouldShowSide:)]) {
             // Ask the delegate if the side should show.
             if (![self.delegate swipeCell:self shouldShowSide:side]) {
-                // Cancel the scroll.
+                // Cancel the swipe.
                 [scrollView setContentOffset:CGPointZero animated:NO];
                 return;
             }
@@ -172,7 +172,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
         if (self.rightView) self.rightView.hidden = (x <= 0);
     }
 
-    // Let the delegate know that the cell scrolled.
+    // Let the delegate know that the cell was swiped.
     if ([self.delegate respondsToSelector:@selector(swipeCell:didSwipe:side:)]) {
         if ((side == FSCSwipeCellSideLeft && self.leftView) || (side == FSCSwipeCellSideRight && self.rightView)) {
             [self.delegate swipeCell:self didSwipe:abs(x) side:side];
@@ -183,13 +183,13 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
     @synchronized([FSCSwipeCell class]) {
         if (FSCSwipeCellCurrentSwipingCell) {
-            // Another cell is already being dragged.
-            self.ignoreDragging = YES;
+            // Another cell is already being swiped.
+            self.ignoreSwiping = YES;
             return;
         }
         FSCSwipeCellCurrentSwipingCell = self;
         self.lastShownSide = FSCSwipeCellSideNone;
-        self.ignoreDragging = NO;
+        self.ignoreSwiping = NO;
     }
 
     CGRect frame = CGRectMake(0, 0, self.scrollView.bounds.size.width, self.scrollView.bounds.size.height);
@@ -199,8 +199,8 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
 - (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset {
     @synchronized([FSCSwipeCell class]) {
-        if (self.ignoreDragging) {
-            // This cell was probably scrolled by a multi-touch gesture.
+        if (self.ignoreSwiping) {
+            // This cell was probably swiped in a multi-touch gesture.
             return;
         }
         FSCSwipeCellCurrentSwipingCell = nil;
@@ -221,7 +221,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
             }
             break;
         case FSCSwipeCellSideNone:
-            // Open the relevant side (if it has a style and the user dragged beyond the threshold).
+            // Open the relevant side (if it has a style and the user swiped beyond the threshold).
             if ((x <= 0 && goingRight) || (x < -kFSCSwipeCellOpenDistanceThreshold && !goingLeft)) {
                 self.currentSide = self.leftView ? FSCSwipeCellSideLeft : FSCSwipeCellSideNone;
             } else if ((x >= 0 && goingLeft) || (x > kFSCSwipeCellOpenDistanceThreshold && !goingRight)) {
