@@ -99,9 +99,10 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     }
 
     _leftView = view;
-    self.scrollView.contentInset = UIEdgeInsetsMake(0, (view ? self.scrollView.bounds.size.width : 0), 0, self.scrollView.contentInset.right);
+    [self updateContentInset];
 
     if (view) {
+        view.frame = CGRectMake(0, 0, self.scrollView.bounds.size.width, self.scrollView.bounds.size.height);
         [self insertSubview:view atIndex:0];
     }
 }
@@ -112,9 +113,10 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     }
 
     _rightView = view;
-    self.scrollView.contentInset = UIEdgeInsetsMake(0, self.scrollView.contentInset.left, 0, (view ? self.scrollView.bounds.size.width : 0));
+    [self updateContentInset];
 
     if (view) {
+        view.frame = CGRectMake(0, 0, self.scrollView.bounds.size.width, self.scrollView.bounds.size.height);
         [self insertSubview:view atIndex:0];
     }
 }
@@ -155,6 +157,11 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
                              }
                          }];
     });
+}
+
+- (void)updateContentInset {
+    CGFloat width = self.scrollView.bounds.size.width;
+    self.scrollView.contentInset = UIEdgeInsetsMake(0, (_leftView ? width : 0), 0, (_rightView ? width : 0));
 }
 
 #pragma mark UIScrollViewDelegate
@@ -286,9 +293,13 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     // This is necessary to ensure that the content size scales with the view.
     self.scrollView.contentSize = self.contentView.bounds.size;
     self.scrollView.contentOffset = CGPointZero;
-    // Update the insets to reflect the new size.
-    CGFloat width = self.scrollView.bounds.size.width;
-    self.scrollView.contentInset = UIEdgeInsetsMake(0, (self.leftView ? width : 0), 0, (self.rightView ? width : 0));
+    [self updateContentInset];
+}
+
+- (void)willRemoveSubview:(UIView *)subview {
+    if (_leftView == subview) _leftView = nil;
+    if (_rightView == subview) _rightView = nil;
+    [self updateContentInset];
 }
 
 @end
