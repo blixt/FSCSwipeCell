@@ -167,7 +167,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     }
 
     // Update the visibility of the left/right swipe views.
-    if (x != 0 || scrollView.dragging) {
+    if (x != 0 || (!self.ignoreSwiping && scrollView.dragging)) {
         if (self.leftView) self.leftView.hidden = (x >= 0);
         if (self.rightView) self.rightView.hidden = (x <= 0);
     }
@@ -188,7 +188,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
             return;
         }
         FSCSwipeCellCurrentSwipingCell = self;
-        self.lastShownSide = FSCSwipeCellSideNone;
+        self.lastShownSide = self.currentSide;
         self.ignoreSwiping = NO;
     }
 
