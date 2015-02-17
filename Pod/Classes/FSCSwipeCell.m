@@ -70,21 +70,27 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
 - (void)setCurrentSide:(FSCSwipeCellSide)side animated:(BOOL)animated {
     if (side == _currentSide) {
-        if (!animated) {
-            dispatch_async(dispatch_get_main_queue(), ^{
-                // Terminate any ongoing animation to make the change instant.
-                [self.scrollView.layer removeAllAnimations];
-            });
-        }
+        // No change needed. However, if an animation is in flight and this call has animated = NO, the animation
+        // will continue. We don't cancel the animation here because it could break the didHideSide delegate call.
         return;
     }
 
+    FSCSwipeCellSide previousSide = _currentSide;
     _currentSide = side;
-    [self setOffsetX:(self.scrollView.bounds.size.width * side) animated:animated];
 
+    // Let the delegate know that the side changed.
     if ([self.delegate respondsToSelector:@selector(swipeCellDidChangeCurrentSide:)]) {
         [self.delegate swipeCellDidChangeCurrentSide:self];
     }
+
+    // Update the scroll view and notify the delegate if relevant.
+    [self swipeToOffset:(self.scrollView.bounds.size.width * side) animated:animated completion:^(BOOL finished) {
+        if (finished && side == FSCSwipeCellSideNone) {
+            if ([self.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
+                [self.delegate swipeCell:self didHideSide:previousSide];
+            }
+        }
+    }];
 }
 
 - (void)setLeftView:(UIView *)view {
@@ -115,11 +121,18 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
 #pragma mark Private methods
 
-- (void)setOffsetX:(CGFloat)x animated:(BOOL)animated {
+- (void)swipeToOffset:(CGFloat)x animated:(BOOL)animated {
+    [self swipeToOffset:x animated:animated completion:nil];
+}
+
+- (void)swipeToOffset:(CGFloat)x animated:(BOOL)animated completion:(void (^)(BOOL finished))completion {
     CGPoint target = CGPointMake(x, 0);
     dispatch_async(dispatch_get_main_queue(), ^{
         if (!animated) {
             [self.scrollView setContentOffset:target animated:NO];
+            if (completion) {
+                completion(YES);
+            }
             return;
         }
 
@@ -135,6 +148,10 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
                              if (self.rightView && self.currentSide != FSCSwipeCellSideRight) {
                                  self.rightView.hidden = YES;
+                             }
+
+                             if (completion) {
+                                 completion(finished);
                              }
                          }];
     });
@@ -241,7 +258,15 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     }
 
     if (resetOffset) {
-        [self setOffsetX:self.currentSide * width animated:YES];
+        // Update the scroll view and notify the delegate if relevant.
+        FSCSwipeCellSide side = self.currentSide;
+        [self swipeToOffset:(side * width) animated:YES completion:^(BOOL finished) {
+            if (finished && self.currentSide == FSCSwipeCellSideNone && x != 0) {
+                if ([self.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
+                    [self.delegate swipeCell:self didHideSide:(x < 0 ? FSCSwipeCellSideLeft : FSCSwipeCellSideRight)];
+                }
+            }
+        }];
     }
 }
 
