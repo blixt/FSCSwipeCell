@@ -4,6 +4,7 @@
 
 @property (nonatomic, strong) NSMutableArray *labels;
 @property (nonatomic, weak) FSCSwipeCell *optionsCell;
+@property (nonatomic, strong) UIView *optionsView;
 
 @end
 
@@ -22,6 +23,10 @@
 @implementation FSCTableViewController
 
 - (void)viewDidLoad {
+    // Create the options view which will be shared by all cells (instead of recreating it for every cell).
+    self.optionsView = [[UIView alloc] init];
+
+    // Create an array which contains a bunch of names that we'll use as example data.
     self.labels = [NSMutableArray arrayWithObjects:@"Pippi Longstocking", @"Austin Powers", @"Spider-Man", @"James Bond",
                                                    @"Lisbeth Salander", @"Donald Duck", @"Luke Skywalker", @"Lara Croft",
                                                    @"Frodo Baggins", @"Hermione Granger", @"Dexter Morgan", @"Ted Mosby",
@@ -125,6 +130,11 @@
         }
     }
 
+    // We're about to show the left side - move the options view to this cell.
+    if (side == FSCSwipeCellSideLeft) {
+        cell.leftView = self.optionsView;
+    }
+
     return YES;
 }
 
@@ -133,14 +143,12 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     static NSString *cellId = @"randomCell";
 
-    // For the purposes of this demo, just return a random cell.
+    // Either reuse an existing cell or set up a new one if necessary.
     FSCSwipeCell *cell = [tableView dequeueReusableCellWithIdentifier:cellId];
     if (!cell) {
+        // Note: We won't create the left view here because it'll be shared by all cells.
         cell = [[FSCSwipeCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:cellId];
         cell.delegate = self;
-
-        // Create the left view which will contain options.
-        cell.leftView = [[UIView alloc] init];
 
         // Create the right view which will be our "Snooze" action.
         cell.rightView = [[UIView alloc] init];
