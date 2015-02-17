@@ -31,14 +31,27 @@ extern CGFloat const kFSCSwipeCellOpenVelocityThreshold;
 #pragma mark - FSCSwipeCellDelegate
 
 /**
- * TODO
+ * Allows monitoring and some control of the user's interaction with the cell.
  */
 @protocol FSCSwipeCellDelegate <NSObject>
 
 @optional
+/**
+ * Called when the left/right side view of the cell is no longer visible.
+ */
 - (void)swipeCell:(FSCSwipeCell *)cell didHideSide:(FSCSwipeCellSide)side;
+/**
+ * Called whenever the cell is being swiped by the user.
+ */
 - (void)swipeCell:(FSCSwipeCell *)cell didSwipe:(CGFloat)distance side:(FSCSwipeCellSide)side;
+/**
+ * Called before a left/right side view is shown, allowing the swipe to be ignored.
+ */
 - (BOOL)swipeCell:(FSCSwipeCell *)cell shouldShowSide:(FSCSwipeCellSide)side;
+/**
+ * Called when the current side of the cell changes. This will be called before animations
+ * complete.
+ */
 - (void)swipeCellDidChangeCurrentSide:(FSCSwipeCell *)cell;
 
 @end
