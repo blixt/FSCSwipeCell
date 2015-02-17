@@ -31,6 +31,8 @@
 #pragma mark FSCSwipeCellDelegate
 
 - (void)swipeCell:(FSCSwipeCell *)cell didSwipe:(CGFloat)distance side:(FSCSwipeCellSide)side {
+    // This method is called when a cell is being swiped by the user. The distance is always a positive number.
+
     // Calculate the progress (0.0-1.0) until releasing the cell will perform the action.
     CGFloat progressToAction = MIN(distance / kFSCSwipeCellOpenDistanceThreshold, 1);
 
@@ -55,6 +57,7 @@
 }
 
 - (void)swipeCellDidChangeCurrentSide:(FSCSwipeCell *)cell {
+    // This method is called whenever the open side changed. Note that this happens before animations finish.
     switch (cell.currentSide) {
         case FSCSwipeCellSideLeft:
             // This is now the cell showing options.
@@ -104,6 +107,7 @@
 }
 
 - (void)swipeCell:(FSCSwipeCell *)cell didHideSide:(FSCSwipeCellSide)side {
+    // This method is called after a side is no longer visible (after animations).
     if (side == FSCSwipeCellSideLeft && cell == self.optionsCell) {
         // The cell is no longer open.
         self.optionsCell = nil;
@@ -111,6 +115,7 @@
 }
 
 - (BOOL)swipeCell:(FSCSwipeCell *)cell shouldShowSide:(FSCSwipeCellSide)side {
+    // This method is called before a side starts showing, giving you the opportunity to cancel the swipe.
     if (self.optionsCell && cell != self.optionsCell) {
         // We only want to display one cell with options at the time. Close the other one first.
         self.optionsCell.currentSide = FSCSwipeCellSideNone;
