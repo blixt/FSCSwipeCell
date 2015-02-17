@@ -4,10 +4,14 @@ CGFloat const kFSCSwipeCellAnimationDuration = 0.15;
 CGFloat const kFSCSwipeCellOpenDistanceThreshold = 75;
 CGFloat const kFSCSwipeCellOpenVelocityThreshold = 0.6;
 
+FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
+
 #pragma mark - FSCSwipeCell
 
 @interface FSCSwipeCell ()
 
+@property (nonatomic) BOOL ignoreDragging;
+@property (nonatomic) FSCSwipeCellSide lastShownSide;
 @property (nonatomic, strong) UIScrollView *scrollView;
 
 @end
@@ -76,38 +80,11 @@ CGFloat const kFSCSwipeCellOpenVelocityThreshold = 0.6;
     }
 
     _currentSide = side;
+    [self setOffsetX:(self.scrollView.bounds.size.width * side) animated:animated];
 
-    CGPoint target = CGPointMake(self.scrollView.bounds.size.width * side, 0);
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (!animated) {
-            [self.scrollView setContentOffset:target animated:NO];
-
-            if ([self.delegate respondsToSelector:@selector(swipeCellDidChangeCurrentSide:)]) {
-                [self.delegate swipeCellDidChangeCurrentSide:self];
-            }
-
-            return;
-        }
-
-        // We use animateWithDuration here because UIScrollView doesn't let you control its deceleration rate.
-        [UIView animateWithDuration:kFSCSwipeCellAnimationDuration
-                         animations:^{
-                             [self.scrollView setContentOffset:target animated:NO];
-                         }
-                         completion:^(BOOL finished) {
-                             if (self.leftView && self.currentSide != FSCSwipeCellSideLeft) {
-                                self.leftView.hidden = YES;
-                             }
-
-                             if (self.rightView && self.currentSide != FSCSwipeCellSideRight) {
-                                 self.rightView.hidden = YES;
-                             }
-
-                             if ([self.delegate respondsToSelector:@selector(swipeCellDidChangeCurrentSide:)]) {
-                                 [self.delegate swipeCellDidChangeCurrentSide:self];
-                             }
-                         }];
-    });
+    if ([self.delegate respondsToSelector:@selector(swipeCellDidChangeCurrentSide:)]) {
+        [self.delegate swipeCellDidChangeCurrentSide:self];
+    }
 }
 
 - (void)setLeftView:(UIView *)view {
@@ -136,25 +113,66 @@ CGFloat const kFSCSwipeCellOpenVelocityThreshold = 0.6;
     }
 }
 
+#pragma mark Private methods
+
+- (void)setOffsetX:(CGFloat)x animated:(BOOL)animated {
+    CGPoint target = CGPointMake(x, 0);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (!animated) {
+            [self.scrollView setContentOffset:target animated:NO];
+            return;
+        }
+
+        // We use animateWithDuration here because UIScrollView doesn't let you control its deceleration rate.
+        [UIView animateWithDuration:kFSCSwipeCellAnimationDuration
+                         animations:^{
+                             [self.scrollView setContentOffset:target animated:NO];
+                         }
+                         completion:^(BOOL finished) {
+                             if (self.leftView && self.currentSide != FSCSwipeCellSideLeft) {
+                                 self.leftView.hidden = YES;
+                             }
+
+                             if (self.rightView && self.currentSide != FSCSwipeCellSideRight) {
+                                 self.rightView.hidden = YES;
+                             }
+                         }];
+    });
+}
+
 #pragma mark UIScrollViewDelegate
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
-    CGFloat x = scrollView.contentOffset.x;
+    CGFloat x;
+    if (self.ignoreDragging) {
+        // Another view is being dragged, so counteract dragging on this one.
+        x = 0;
+        [scrollView setContentOffset:CGPointZero animated:NO];
+    } else {
+        x = scrollView.contentOffset.x;
+    }
 
+    // Figure out which side will show.
     FSCSwipeCellSide side = (x < 0 ? FSCSwipeCellSideLeft : (x > 0 ? FSCSwipeCellSideRight : FSCSwipeCellSideNone));
-    if (side != FSCSwipeCellSideNone && [self.delegate respondsToSelector:@selector(swipeCell:shouldShowSide:)]) {
-        if (![self.delegate swipeCell:self shouldShowSide:side]) {
-            // Cancel the scroll.
-            scrollView.contentOffset = CGPointZero;
-            return;
+    if (side != self.lastShownSide) {
+        self.lastShownSide = side;
+        if (side != FSCSwipeCellSideNone && [self.delegate respondsToSelector:@selector(swipeCell:shouldShowSide:)]) {
+            // Ask the delegate if the side should show.
+            if (![self.delegate swipeCell:self shouldShowSide:side]) {
+                // Cancel the scroll.
+                [scrollView setContentOffset:CGPointZero animated:NO];
+                return;
+            }
         }
     }
 
-    if (x != 0 || scrollView.isDragging) {
+    // Update the visibility of the left/right swipe views.
+    if (x != 0 || scrollView.dragging) {
         if (self.leftView) self.leftView.hidden = (x >= 0);
         if (self.rightView) self.rightView.hidden = (x <= 0);
     }
 
+    // Let the delegate know that the cell scrolled.
     if ([self.delegate respondsToSelector:@selector(swipeCell:didScroll:side:)]) {
         if ((side == FSCSwipeCellSideLeft && self.leftView) || (side == FSCSwipeCellSideRight && self.rightView)) {
             [self.delegate swipeCell:self didScroll:abs(x) side:side];
@@ -163,40 +181,68 @@ CGFloat const kFSCSwipeCellOpenVelocityThreshold = 0.6;
 }
 
 - (void)scrollViewWillBeginDragging:(UIScrollView *)scrollView {
+    @synchronized([FSCSwipeCell class]) {
+        if (FSCSwipeCellCurrentSwipingCell) {
+            // Another cell is already being dragged.
+            self.ignoreDragging = YES;
+            return;
+        }
+        FSCSwipeCellCurrentSwipingCell = self;
+        self.lastShownSide = FSCSwipeCellSideNone;
+        self.ignoreDragging = NO;
+    }
+
     CGRect frame = CGRectMake(0, 0, self.scrollView.bounds.size.width, self.scrollView.bounds.size.height);
     if (self.leftView) self.leftView.frame = frame;
     if (self.rightView) self.rightView.frame = frame;
 }
 
 - (void)scrollViewWillEndDragging:(UIScrollView *)scrollView withVelocity:(CGPoint)velocity targetContentOffset:(inout CGPoint *)targetContentOffset {
-    CGFloat x = scrollView.contentOffset.x, width = scrollView.bounds.size.width;
-    BOOL goingLeft = (velocity.x < -kFSCSwipeCellOpenVelocityThreshold);
-    BOOL goingRight = (velocity.x > kFSCSwipeCellOpenVelocityThreshold);
+    @synchronized([FSCSwipeCell class]) {
+        if (self.ignoreDragging) {
+            // This cell was probably scrolled by a multi-touch gesture.
+            return;
+        }
+        FSCSwipeCellCurrentSwipingCell = nil;
+    }
 
+    CGFloat x = scrollView.contentOffset.x, width = scrollView.bounds.size.width;
+    BOOL goingLeft = (velocity.x > kFSCSwipeCellOpenVelocityThreshold);
+    BOOL goingRight = (velocity.x < -kFSCSwipeCellOpenVelocityThreshold);
+
+    BOOL resetOffset = NO;
     switch (self.currentSide) {
         case FSCSwipeCellSideLeft:
             // Return to default state unless the user swiped in the open direction.
-            if (!goingLeft && x > -width) {
+            if (!goingRight && x > -width) {
                 self.currentSide = FSCSwipeCellSideNone;
+            } else {
+                resetOffset = YES;
             }
             break;
         case FSCSwipeCellSideNone:
             // Open the relevant side (if it has a style and the user dragged beyond the threshold).
-            if (goingLeft || (x < -kFSCSwipeCellOpenDistanceThreshold && !goingRight)) {
+            if ((x <= 0 && goingRight) || (x < -kFSCSwipeCellOpenDistanceThreshold && !goingLeft)) {
                 self.currentSide = self.leftView ? FSCSwipeCellSideLeft : FSCSwipeCellSideNone;
-            } else if (goingRight || (x > kFSCSwipeCellOpenDistanceThreshold && !goingLeft)) {
+            } else if ((x >= 0 && goingLeft) || (x > kFSCSwipeCellOpenDistanceThreshold && !goingRight)) {
                 self.currentSide = self.rightView ? FSCSwipeCellSideRight : FSCSwipeCellSideNone;
+            } else {
+                resetOffset = YES;
             }
             break;
         case FSCSwipeCellSideRight:
             // Return to default state unless the user swiped in the open direction.
-            if (!goingRight && x < width) {
+            if (!goingLeft && x < width) {
                 self.currentSide = FSCSwipeCellSideNone;
+            } else {
+                resetOffset = YES;
             }
             break;
     }
 
-    targetContentOffset->x = width * self.currentSide;
+    if (resetOffset) {
+        [self setOffsetX:self.currentSide * width animated:YES];
+    }
 }
 
 #pragma mark UITableViewCell
