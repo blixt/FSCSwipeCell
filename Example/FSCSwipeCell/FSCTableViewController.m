@@ -30,7 +30,7 @@
 
 #pragma mark FSCSwipeCellDelegate
 
-- (void)swipeCell:(FSCSwipeCell *)cell didScroll:(CGFloat)distance side:(FSCSwipeCellSide)side {
+- (void)swipeCell:(FSCSwipeCell *)cell didSwipe:(CGFloat)distance side:(FSCSwipeCellSide)side {
     // Calculate the progress (0.0-1.0) until releasing the cell will perform the action.
     CGFloat progressToAction = MIN(distance / kFSCSwipeCellOpenDistanceThreshold, 1);
 
