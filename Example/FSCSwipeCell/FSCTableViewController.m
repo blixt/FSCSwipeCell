@@ -61,10 +61,6 @@
             self.optionsCell = cell;
             break;
         case FSCSwipeCellSideNone:
-            if (cell == self.optionsCell) {
-                // The cell is no longer open.
-                self.optionsCell = nil;
-            }
             break;
         case FSCSwipeCellSideRight:
         {
@@ -104,6 +100,13 @@
             [self presentViewController:alert animated:YES completion:nil];
             break;
         }
+    }
+}
+
+- (void)swipeCell:(FSCSwipeCell *)cell didHideSide:(FSCSwipeCellSide)side {
+    if (side == FSCSwipeCellSideLeft && cell == self.optionsCell) {
+        // The cell is no longer open.
+        self.optionsCell = nil;
     }
 }
 
