@@ -7,6 +7,18 @@
 
 @end
 
+/**
+ * This example aims to show the versatility of FSCSwipeView. While FSCSwipeView does very little on its own,
+ * it's pretty easy to implement your own logic on top of it to get swipable table view cells that behave as
+ * you'd expect.
+ *
+ * The main ideas shown in this example are:
+ * - Cells that can be swiped left and right without interfering with normal scrolling;
+ * - Swipe-to-perform-action cells (a la Google's Inbox);
+ * - Swipe to reveal option buttons;
+ * - Reuse a single option buttons view for all cells;
+ * - Dynamic background and iconography to indicate to the user how far to swipe
+ */
 @implementation FSCTableViewController
 
 - (void)viewDidLoad {
@@ -19,13 +31,26 @@
 #pragma mark FSCSwipeCellDelegate
 
 - (void)swipeCell:(FSCSwipeCell *)cell didScroll:(CGFloat)distance side:(FSCSwipeCellSide)side {
-    // Calculate a brightness based on how far the cell has been swiped (hits 1.0 when cell will open on its own when released).
-    CGFloat brightness = MIN(0.5 + distance / (kFSCSwipeCellOpenDistanceThreshold * 2), 1);
+    // Calculate the progress (0.0-1.0) until releasing the cell will perform the action.
+    CGFloat progressToAction = MIN(distance / kFSCSwipeCellOpenDistanceThreshold, 1);
 
+    // Calculate a brightness based on how far the cell has been swiped.
+    CGFloat brightness = 0.5 + progressToAction / 2;
     if (side == FSCSwipeCellSideLeft) {
-        cell.leftView.backgroundColor = [UIColor colorWithHue:0.8 saturation:1 brightness:brightness alpha:1];
+        cell.leftView.backgroundColor = [UIColor colorWithHue:0.6 saturation:0.4 brightness:brightness alpha:1];
     } else if (side == FSCSwipeCellSideRight) {
-        cell.rightView.backgroundColor = [UIColor colorWithHue:0.2 saturation:1 brightness:brightness alpha:1];
+        cell.rightView.backgroundColor = [UIColor colorWithHue:0.12 saturation:1 brightness:brightness alpha:1];
+
+        // Place the snooze icon with the correct size.
+        UIImageView *snooze = (UIImageView *)[cell.rightView viewWithTag:1];
+        if (progressToAction > 0.5) {
+            CGFloat size = 16 * (progressToAction * 2 - 1);
+            snooze.frame = CGRectMake(0, 0, size, size);
+            snooze.center = CGPointMake(cell.bounds.size.width - 30, cell.bounds.size.height / 2);
+            snooze.hidden = NO;
+        } else {
+            snooze.hidden = YES;
+        }
     }
 }
 
@@ -83,10 +108,13 @@
 }
 
 - (BOOL)swipeCell:(FSCSwipeCell *)cell shouldShowSide:(FSCSwipeCellSide)side {
-    if (side == FSCSwipeCellSideLeft && self.optionsCell && cell != self.optionsCell) {
+    if (self.optionsCell && cell != self.optionsCell) {
         // We only want to display one cell with options at the time. Close the other one first.
         self.optionsCell.currentSide = FSCSwipeCellSideNone;
-        return NO;
+        // Keep the left side closed until the other cell has finished closing.
+        if (side == FSCSwipeCellSideLeft) {
+            return NO;
+        }
     }
 
     return YES;
@@ -108,6 +136,11 @@
 
         // Create the right view which will be our "Snooze" action.
         cell.rightView = [[UIView alloc] init];
+
+        // Create an image view for the Snooze icon.
+        UIImageView *snooze = [[UIImageView alloc] initWithImage:[UIImage imageNamed:@"Snooze"]];
+        snooze.tag = 1;
+        [cell.rightView addSubview:snooze];
     }
 
     // Set up the labels.
