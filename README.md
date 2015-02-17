@@ -1,6 +1,6 @@
 # FSCSwipeCell
 
-[![CI Status](http://img.shields.io/travis/Blixt/FSCSwipeCell.svg?style=flat)](https://travis-ci.org/Blixt/FSCSwipeCell)
+[![CI Status](http://img.shields.io/travis/47center/FSCSwipeCell.svg?style=flat)](https://travis-ci.org/47center/FSCSwipeCell)
 [![Version](https://img.shields.io/cocoapods/v/FSCSwipeCell.svg?style=flat)](http://cocoadocs.org/docsets/FSCSwipeCell)
 [![License](https://img.shields.io/cocoapods/l/FSCSwipeCell.svg?style=flat)](http://cocoadocs.org/docsets/FSCSwipeCell)
 [![Platform](https://img.shields.io/cocoapods/p/FSCSwipeCell.svg?style=flat)](http://cocoadocs.org/docsets/FSCSwipeCell)
