@@ -94,10 +94,8 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 }
 
 - (void)setLeftView:(UIView *)view {
-    if (_leftView) {
-        [_leftView removeFromSuperview];
-    }
-
+    if (view == _leftView) return;
+    if (_leftView) [_leftView removeFromSuperview];
     _leftView = view;
     [self updateContentInset];
 
@@ -108,10 +106,8 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 }
 
 - (void)setRightView:(UIView *)view {
-    if (_rightView) {
-        [_rightView removeFromSuperview];
-    }
-
+    if (view == _rightView) return;
+    if (_rightView) [_rightView removeFromSuperview];
     _rightView = view;
     [self updateContentInset];
 
