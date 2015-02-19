@@ -7,7 +7,7 @@
 
 ## What is it?
 
-![Demo](http://fat.gfycat.com/CarefreeCreativeAdder.gif)
+<img src="http://fat.gfycat.com/CarefreeCreativeAdder.gif" height="268">
 
 This component was built to make swipeable cells behave as one would expect, without taking control of what appears
 when you swipe left or right.
