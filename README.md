@@ -5,6 +5,13 @@
 [![License](https://img.shields.io/cocoapods/l/FSCSwipeCell.svg?style=flat)](http://cocoadocs.org/docsets/FSCSwipeCell)
 [![Platform](https://img.shields.io/cocoapods/p/FSCSwipeCell.svg?style=flat)](http://cocoadocs.org/docsets/FSCSwipeCell)
 
+## Installation
+
+FSCSwipeCell is available through [CocoaPods](http://cocoapods.org). To install it, simply
+add the following line to your Podfile:
+
+    pod "FSCSwipeCell"
+
 ## What is it?
 
 <img src="http://fat.gfycat.com/CarefreeCreativeAdder.gif" height="268">
@@ -44,13 +51,6 @@ with iOS 7 so that might not work too well (yet). All pull requests are welcome!
 ## Usage
 
 To run the example project, clone the repo, and run `pod install` from the Example directory first.
-
-## Installation
-
-FSCSwipeCell is available through [CocoaPods](http://cocoapods.org). To install it, simply
-add the following line to your Podfile:
-
-    pod "FSCSwipeCell"
 
 ## Author
 
