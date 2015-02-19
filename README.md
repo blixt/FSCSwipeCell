@@ -21,11 +21,20 @@ when you swipe left or right.
     * The cell has been swiped any distance
     * The cell is done closing (either because the user swiped it shut, or didn't swipe beyond the threshold)
 * Repurposes the standard `UITableViewCell`'s `contentView`, so all table view styles are supported
+* Lets you assign `leftView` or `rightView` immediately before showing them, so you can reuse one view for all cells
 
 ### What it doesn't do
 
 * It doesn't create or handle any content in the left/right views
 * It (currently) doesn't allow the cell to stay half-open (e.g., like the Mail app's more/delete buttons)
+
+### Why not one of the other swipeable cell libraries out there?
+
+It really depends on what you're after. This library gives you some more control of how the cell renders when swiped,
+but if you just want to show a few buttons when the user swipes left, use [UITableViewRowAction][], or if you want
+some more functionality on the buttons, check out [SWTableViewCell][] or [MGSwipeTableCell][]. There are some things
+I needed for my app which are out of the scope of those libraries, which is why I made this library. Hopefully all
+these libraries together will help cover everyone's needs.
 
 ## A note on stability
 
@@ -50,3 +59,8 @@ Blixt, blixt@47center.com
 ## License
 
 FSCSwipeCell is available under the MIT license. See the LICENSE file for more info.
+
+
+[UITableViewRowAction]: https://developer.apple.com/library/ios/documentation/UIKit/Reference/UITableViewRowAction_class/index.html
+[SWTableViewCell]: https://github.com/CEWendel/SWTableViewCell
+[MGSwipeTableCell]: https://github.com/MortimerGoro/MGSwipeTableCell
