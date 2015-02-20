@@ -6,8 +6,11 @@
  * Refers to a particular side of a cell.
  */
 typedef NS_ENUM(NSInteger, FSCSwipeCellSide) {
+    /** Neither side of the cell, often referring to the cell being in its default state. */
     FSCSwipeCellSideNone = 0,
+    /** The left side of the cell. */
     FSCSwipeCellSideLeft = -1,
+    /** The right side of the cell. */
     FSCSwipeCellSideRight = 1,
 };
 
@@ -66,12 +69,37 @@ extern CGFloat const kFSCSwipeCellOpenVelocityThreshold;
  */
 @interface FSCSwipeCell : UITableViewCell <UIScrollViewDelegate>
 
+/**
+ * The currently shown side of the cell. Note that this value will change before the animation
+ * finishes.
+ */
 @property (nonatomic) FSCSwipeCellSide currentSide;
+/**
+ * An optional delegate which will be notified whenever the user interacts with the cell.
+ */
 @property (nonatomic, weak) id<FSCSwipeCellDelegate> delegate;
+/**
+ * The view to display when the cell is swiped from left to right. Setting this value will put
+ * the specified view as a subview of this cell. Removing that view from this cell will reset
+ * this value to nil.
+ */
 @property (nonatomic, strong) UIView *leftView;
+/**
+ * The view to display when the cell is swiped from right to left. Setting this value will put
+ * the specified view as a subview of this cell. Removing that view from this cell will reset
+ * this value to nil.
+ */
 @property (nonatomic, strong) UIView *rightView;
+/**
+ * The scroll view which enables the content of the cell to move left and right over the
+ * subviews.
+ */
 @property (nonatomic, readonly, strong) UIScrollView *scrollView;
 
+/**
+ * Sets the current side of the cell, with control over animation. By default, the side change
+ * is animated, but passing in NO will make the change instant.
+ */
 - (void)setCurrentSide:(FSCSwipeCellSide)side animated:(BOOL)animated;
 
 @end
