@@ -103,9 +103,10 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 - (void)setOffset:(CGFloat)x duration:(NSTimeInterval)duration completion:(void (^)(BOOL finished))completion {
     _offset = x;
 
+    CGRect bounds = CGRectMake(x, 0, self.frame.size.width, self.frame.size.height);
     dispatch_async(dispatch_get_main_queue(), ^{
         if (duration <= 0) {
-            self.bounds = CGRectOffset(self.frame, x, 0);
+            self.bounds = bounds;
             if (completion) {
                 completion(YES);
             }
@@ -114,7 +115,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
         [UIView animateWithDuration:duration
                          animations:^{
-                             self.bounds = CGRectOffset(self.frame, x, 0);
+                             self.bounds = bounds;
                          }
                          completion:^(BOOL finished) {
                              if (self.leftView && self.currentSide != FSCSwipeCellSideLeft) {
@@ -148,7 +149,6 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 - (void)cellWasSwiped:(UIPanGestureRecognizer *)sender {
     CGFloat velocity = -[sender velocityInView:self].x;
     CGFloat width = self.bounds.size.width;
-    BOOL swiping;
 
     // Calculate the base offset from the currently visible side of the cell.
     CGFloat x;
@@ -167,6 +167,9 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     // Update the X coordinate with the swiped distance.
     x -= [sender translationInView:self].x;
 
+    // Determine which side is showing.
+    FSCSwipeCellSide side = (x < 0 ? FSCSwipeCellSideLeft : (x > 0 ? FSCSwipeCellSideRight : FSCSwipeCellSideNone));
+
     // Handle the various dragging states.
     switch (sender.state) {
         case UIGestureRecognizerStateBegan:
@@ -182,13 +185,38 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
             }
 
             // Position the left/right views under the content view.
-            if (self.leftView) self.leftView.frame = self.frame;
-            if (self.rightView) self.rightView.frame = self.frame;
+            CGRect frame = CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height);
+            if (self.leftView) self.leftView.frame = frame;
+            if (self.rightView) self.rightView.frame = frame;
 
-            swiping = YES;
-            break;
+            // Intentional fall-through of control.
         case UIGestureRecognizerStateChanged:
-            swiping = YES;
+            // Update the visibility of the left/right swipe views.
+            if (self.leftView) self.leftView.hidden = (x >= 0);
+            if (self.rightView) self.rightView.hidden = (x <= 0);
+
+            // Handle sides changing.
+            if (side != self.lastShownSide) {
+                self.lastShownSide = side;
+                if (side != FSCSwipeCellSideNone && [self.delegate respondsToSelector:@selector(swipeCell:shouldShowSide:)]) {
+                    // Ask the delegate if the side should show.
+                    if (![self.delegate swipeCell:self shouldShowSide:side]) {
+                        // Cancel the swipe.
+                        x = 0;
+                    }
+                }
+            }
+
+            // Move the cell content instantly.
+            [self setOffset:x duration:0];
+
+            // Let the delegate know that the cell was swiped.
+            if ([self.delegate respondsToSelector:@selector(swipeCell:didSwipe:side:)]) {
+                if ((side == FSCSwipeCellSideLeft && self.leftView) || (side == FSCSwipeCellSideRight && self.rightView)) {
+                    [self.delegate swipeCell:self didSwipe:abs(x) side:side];
+                }
+            }
+
             break;
         case UIGestureRecognizerStateEnded:
         {
@@ -246,7 +274,6 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
                 }];
             }
 
-            swiping = NO;
             break;
         }
         case UIGestureRecognizerStateCancelled:
@@ -257,46 +284,33 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
             return;
     }
     self.lastPanEventTime = CFAbsoluteTimeGetCurrent();
-
-    // Figure out which side will show.
-    FSCSwipeCellSide side = (x < 0 ? FSCSwipeCellSideLeft : (x > 0 ? FSCSwipeCellSideRight : FSCSwipeCellSideNone));
-    if (side != self.lastShownSide) {
-        self.lastShownSide = side;
-        if (side != FSCSwipeCellSideNone && [self.delegate respondsToSelector:@selector(swipeCell:shouldShowSide:)]) {
-            // Ask the delegate if the side should show.
-            if (![self.delegate swipeCell:self shouldShowSide:side]) {
-                // Cancel the swipe.
-                x = 0;
-            }
-        }
-    }
-
-    // Update the visibility of the left/right swipe views.
-    if (x != 0 || swiping) {
-        if (self.leftView) self.leftView.hidden = (x >= 0);
-        if (self.rightView) self.rightView.hidden = (x <= 0);
-    }
-
-    // Move the cell content instantly.
-    [self setOffset:x duration:0];
-
-    // Let the delegate know that the cell was swiped.
-    if ([self.delegate respondsToSelector:@selector(swipeCell:didSwipe:side:)]) {
-        if ((side == FSCSwipeCellSideLeft && self.leftView) || (side == FSCSwipeCellSideRight && self.rightView)) {
-            [self.delegate swipeCell:self didSwipe:abs(x) side:side];
-        }
-    }
 }
 
 #pragma mark UIGestureRecognizerDelegate
 
-- (BOOL)gestureRecognizerShouldBegin:(UIPanGestureRecognizer *)gestureRecognizer {
-    CGPoint translation = [gestureRecognizer translationInView:self];
+- (BOOL)gestureRecognizerShouldBegin:(UIPanGestureRecognizer *)recognizer {
+    if (recognizer != self.panGestureRecognizer) {
+        if ([[self superclass] instancesRespondToSelector:@selector(gestureRecognizerShouldBegin:)]) {
+            return [super gestureRecognizerShouldBegin:recognizer];
+        } else {
+            return YES;
+        }
+    }
+
+    CGPoint translation = [recognizer translationInView:self];
     // Fail vertical swipes.
     return (abs(translation.y) < abs(translation.x));
 }
 
-- (BOOL)gestureRecognizer:(UIPanGestureRecognizer *)gestureRecognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+- (BOOL)gestureRecognizer:(UIPanGestureRecognizer *)recognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)other {
+    if (recognizer != self.panGestureRecognizer) {
+        if ([[self superclass] instancesRespondToSelector:@selector(gestureRecognizer:shouldBeRequiredToFailByGestureRecognizer:)]) {
+            return [super gestureRecognizer:recognizer shouldBeRequiredToFailByGestureRecognizer:other];
+        } else {
+            return NO;
+        }
+    }
+
     return YES;
 }
 
