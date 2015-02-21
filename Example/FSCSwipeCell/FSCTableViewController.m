@@ -30,6 +30,7 @@
     label.textColor = [UIColor whiteColor];
     label.text = @"Imagine there are actually options here. :)";
     [self.optionsView addSubview:label];
+    [self.optionsView addSubview:[[UISwitch alloc] init]];
 
     // Create an array which contains a bunch of names that we'll use as example data.
     self.labels = [NSMutableArray arrayWithObjects:@"Pippi Longstocking", @"Austin Powers", @"Spider-Man", @"James Bond",

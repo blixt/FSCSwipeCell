@@ -1,6 +1,6 @@
 #import "FSCSwipeCell.h"
 
-CGFloat const kFSCSwipeCellAnimationDuration = 0.15;
+NSTimeInterval const kFSCSwipeCellAnimationDuration = 0.15;
 CGFloat const kFSCSwipeCellBounceElasticity = 0.3;
 CGFloat const kFSCSwipeCellOpenDistanceThreshold = 75;
 CGFloat const kFSCSwipeCellOpenVelocityThreshold = 500;
@@ -37,6 +37,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 - (void)setUp {
     _panGestureRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(cellWasSwiped:)];
     _panGestureRecognizer.delaysTouchesBegan = YES;
+    _panGestureRecognizer.delegate = self;
     [self addGestureRecognizer:_panGestureRecognizer];
 
     // Remove the white background color from the cell itself.
@@ -49,10 +50,10 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 #pragma mark Properties
 
 - (void)setCurrentSide:(FSCSwipeCellSide)side {
-    [self setCurrentSide:side animated:YES];
+    [self setCurrentSide:side duration:kFSCSwipeCellAnimationDuration];
 }
 
-- (void)setCurrentSide:(FSCSwipeCellSide)side animated:(BOOL)animated {
+- (void)setCurrentSide:(FSCSwipeCellSide)side duration:(NSTimeInterval)duration {
     if (side == _currentSide) {
         // No change needed. However, if an animation is in flight and this call has animated = NO, the animation
         // will continue. We don't cancel the animation here because it could break the didHideSide delegate call.
@@ -68,11 +69,10 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     }
 
     // Update the view and notify the delegate if relevant.
-    [self swipeToOffset:(self.bounds.size.width * side) animated:animated completion:^(BOOL finished) {
-        if (finished && side == FSCSwipeCellSideNone) {
-            if ([self.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
-                [self.delegate swipeCell:self didHideSide:previousSide];
-            }
+    __weak FSCSwipeCell *cell = self;
+    [self setOffset:(self.bounds.size.width * side) duration:duration completion:^(BOOL finished) {
+        if (finished && side == FSCSwipeCellSideNone && [cell.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
+            [cell.delegate swipeCell:cell didHideSide:previousSide];
         }
     }];
 }
@@ -86,6 +86,50 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
         view.frame = CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height);
         [self insertSubview:view atIndex:0];
     }
+}
+
+- (void)setOffset:(CGFloat)x {
+    [self setOffset:x duration:kFSCSwipeCellAnimationDuration completion:nil];
+}
+
+- (void)setOffset:(CGFloat)x completion:(void (^)(BOOL finished))completion {
+    [self setOffset:x duration:kFSCSwipeCellAnimationDuration completion:completion];
+}
+
+- (void)setOffset:(CGFloat)x duration:(NSTimeInterval)duration {
+    [self setOffset:x duration:duration completion:nil];
+}
+
+- (void)setOffset:(CGFloat)x duration:(NSTimeInterval)duration completion:(void (^)(BOOL finished))completion {
+    _offset = x;
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (duration <= 0) {
+            self.bounds = CGRectOffset(self.frame, x, 0);
+            if (completion) {
+                completion(YES);
+            }
+            return;
+        }
+
+        [UIView animateWithDuration:duration
+                         animations:^{
+                             self.bounds = CGRectOffset(self.frame, x, 0);
+                         }
+                         completion:^(BOOL finished) {
+                             if (self.leftView && self.currentSide != FSCSwipeCellSideLeft) {
+                                 self.leftView.hidden = YES;
+                             }
+
+                             if (self.rightView && self.currentSide != FSCSwipeCellSideRight) {
+                                 self.rightView.hidden = YES;
+                             }
+
+                             if (completion) {
+                                 completion(finished);
+                             }
+                         }];
+    });
 }
 
 - (void)setRightView:(UIView *)view {
@@ -106,7 +150,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     CGFloat width = self.bounds.size.width;
     BOOL swiping;
 
-    // Calculate the origin based on the current visible side of the cell.
+    // Calculate the base offset from the currently visible side of the cell.
     CGFloat x;
     switch (self.currentSide) {
         case FSCSwipeCellSideLeft:
@@ -192,10 +236,11 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
             if (resetOffset) {
                 // Update the view and notify the delegate if relevant.
                 FSCSwipeCellSide side = self.currentSide;
-                [self swipeToOffset:(side * width) animated:YES completion:^(BOOL finished) {
-                    if (finished && self.currentSide == FSCSwipeCellSideNone && x != 0) {
-                        if ([self.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
-                            [self.delegate swipeCell:self didHideSide:(x < 0 ? FSCSwipeCellSideLeft : FSCSwipeCellSideRight)];
+                __weak FSCSwipeCell *cell = self;
+                [self setOffset:(side * width) completion:^(BOOL finished) {
+                    if (finished && cell.currentSide == FSCSwipeCellSideNone && x != 0) {
+                        if ([cell.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
+                            [cell.delegate swipeCell:cell didHideSide:(x < 0 ? FSCSwipeCellSideLeft : FSCSwipeCellSideRight)];
                         }
                     }
                 }];
@@ -232,8 +277,8 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
         if (self.rightView) self.rightView.hidden = (x <= 0);
     }
 
-    // Move the cell content.
-    self.bounds = CGRectOffset(self.frame, x, 0);
+    // Move the cell content instantly.
+    [self setOffset:x duration:0];
 
     // Let the delegate know that the cell was swiped.
     if ([self.delegate respondsToSelector:@selector(swipeCell:didSwipe:side:)]) {
@@ -243,45 +288,22 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     }
 }
 
-- (void)swipeToOffset:(CGFloat)x animated:(BOOL)animated {
-    [self swipeToOffset:x animated:animated completion:nil];
+#pragma mark UIGestureRecognizerDelegate
+
+- (BOOL)gestureRecognizerShouldBegin:(UIPanGestureRecognizer *)gestureRecognizer {
+    CGPoint translation = [gestureRecognizer translationInView:self];
+    // Fail vertical swipes.
+    return (abs(translation.y) < abs(translation.x));
 }
 
-- (void)swipeToOffset:(CGFloat)x animated:(BOOL)animated completion:(void (^)(BOOL finished))completion {
-    dispatch_async(dispatch_get_main_queue(), ^{
-        if (!animated) {
-            self.bounds = CGRectOffset(self.frame, x, 0);
-            if (completion) {
-                completion(YES);
-            }
-            return;
-        }
-
-        // We use animateWithDuration here because UIScrollView doesn't let you control its deceleration rate.
-        [UIView animateWithDuration:kFSCSwipeCellAnimationDuration
-                         animations:^{
-                             self.bounds = CGRectOffset(self.frame, x, 0);
-                         }
-                         completion:^(BOOL finished) {
-                             if (self.leftView && self.currentSide != FSCSwipeCellSideLeft) {
-                                 self.leftView.hidden = YES;
-                             }
-
-                             if (self.rightView && self.currentSide != FSCSwipeCellSideRight) {
-                                 self.rightView.hidden = YES;
-                             }
-
-                             if (completion) {
-                                 completion(finished);
-                             }
-                         }];
-    });
+- (BOOL)gestureRecognizer:(UIPanGestureRecognizer *)gestureRecognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    return YES;
 }
 
 #pragma mark UITableViewCell
 
 - (void)prepareForReuse {
-    [self setCurrentSide:FSCSwipeCellSideNone animated:NO];
+    [self setCurrentSide:FSCSwipeCellSideNone duration:0];
 }
 
 #pragma mark UIView
