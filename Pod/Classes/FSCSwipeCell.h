@@ -15,9 +15,9 @@ typedef NS_ENUM(NSInteger, FSCSwipeCellSide) {
 };
 
 /**
- * The duration of the cell's open/close animations, in seconds.
+ * The default duration of the cell's open/close animations, in seconds.
  */
-extern CGFloat const kFSCSwipeCellAnimationDuration;
+extern NSTimeInterval const kFSCSwipeCellAnimationDuration;
 
 /**
  * How many points the user has to swipe the cell in a direction to open when the user lets
@@ -84,6 +84,12 @@ extern CGFloat const kFSCSwipeCellOpenVelocityThreshold;
  * this value to nil.
  */
 @property (nonatomic, strong) UIView *leftView;
+
+/**
+ * The current offset of the main content view in the cell.
+ */
+@property (nonatomic) CGFloat offset;
+
 /**
  * The view to display when the cell is swiped from right to left. Setting this value will put
  * the specified view as a subview of this cell. Removing that view from this cell will reset
@@ -98,8 +104,27 @@ extern CGFloat const kFSCSwipeCellOpenVelocityThreshold;
 
 /**
  * Sets the current side of the cell, with control over animation. By default, the side change
- * is animated, but passing in NO will make the change instant.
+ * is animated, but passing in 0 will make the change instant.
  */
-- (void)setCurrentSide:(FSCSwipeCellSide)side animated:(BOOL)animated;
+- (void)setCurrentSide:(FSCSwipeCellSide)side duration:(NSTimeInterval)duration;
+
+/**
+ * Sets the current offset of the content cell, with control over animation. By default,
+ * the change is animated, but passing in 0 will make the change instant.
+ */
+- (void)setOffset:(CGFloat)x duration:(NSTimeInterval)duration;
+
+/**
+ * Sets the current offset of the content cell, with a block to call when the animation
+ * has finished.
+ */
+- (void)setOffset:(CGFloat)x completion:(void (^)(BOOL finished))completion;
+
+/**
+ * Sets the current offset of the content cell, with control over animation and a block
+ * to call when it finishes. By default, the change is animated, but passing in 0 will
+ * make the change instant.
+ */
+- (void)setOffset:(CGFloat)x duration:(NSTimeInterval)duration completion:(void (^)(BOOL finished))completion;
 
 @end

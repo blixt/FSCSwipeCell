@@ -1,6 +1,6 @@
 #import "FSCSwipeCell.h"
 
-CGFloat const kFSCSwipeCellAnimationDuration = 0.15;
+NSTimeInterval const kFSCSwipeCellAnimationDuration = 0.15;
 CGFloat const kFSCSwipeCellOpenDistanceThreshold = 75;
 CGFloat const kFSCSwipeCellOpenVelocityThreshold = 0.6;
 
@@ -65,10 +65,10 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 #pragma mark Properties
 
 - (void)setCurrentSide:(FSCSwipeCellSide)side {
-    [self setCurrentSide:side animated:YES];
+    [self setCurrentSide:side duration:kFSCSwipeCellAnimationDuration];
 }
 
-- (void)setCurrentSide:(FSCSwipeCellSide)side animated:(BOOL)animated {
+- (void)setCurrentSide:(FSCSwipeCellSide)side duration:(NSTimeInterval)duration {
     if (side == _currentSide) {
         // No change needed. However, if an animation is in flight and this call has animated = NO, the animation
         // will continue. We don't cancel the animation here because it could break the didHideSide delegate call.
@@ -83,12 +83,11 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
         [self.delegate swipeCellDidChangeCurrentSide:self];
     }
 
-    // Update the scroll view and notify the delegate if relevant.
-    [self swipeToOffset:(self.scrollView.bounds.size.width * side) animated:animated completion:^(BOOL finished) {
-        if (finished && side == FSCSwipeCellSideNone) {
-            if ([self.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
-                [self.delegate swipeCell:self didHideSide:previousSide];
-            }
+    // Update the view and notify the delegate if relevant.
+    __weak FSCSwipeCell *cell = self;
+    [self setOffset:(self.scrollView.bounds.size.width * side) duration:duration completion:^(BOOL finished) {
+        if (finished && side == FSCSwipeCellSideNone && [cell.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
+            [cell.delegate swipeCell:cell didHideSide:previousSide];
         }
     }];
 }
@@ -105,28 +104,24 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     }
 }
 
-- (void)setRightView:(UIView *)view {
-    if (view == _rightView) return;
-    if (_rightView) [_rightView removeFromSuperview];
-    _rightView = view;
-    [self updateContentInset];
-
-    if (view) {
-        view.frame = CGRectMake(0, 0, self.scrollView.bounds.size.width, self.scrollView.bounds.size.height);
-        [self insertSubview:view atIndex:0];
-    }
+- (void)setOffset:(CGFloat)x {
+    [self setOffset:x duration:kFSCSwipeCellAnimationDuration completion:nil];
 }
 
-#pragma mark Private methods
-
-- (void)swipeToOffset:(CGFloat)x animated:(BOOL)animated {
-    [self swipeToOffset:x animated:animated completion:nil];
+- (void)setOffset:(CGFloat)x completion:(void (^)(BOOL finished))completion {
+    [self setOffset:x duration:kFSCSwipeCellAnimationDuration completion:completion];
 }
 
-- (void)swipeToOffset:(CGFloat)x animated:(BOOL)animated completion:(void (^)(BOOL finished))completion {
+- (void)setOffset:(CGFloat)x duration:(NSTimeInterval)duration {
+    [self setOffset:x duration:duration completion:nil];
+}
+
+- (void)setOffset:(CGFloat)x duration:(NSTimeInterval)duration completion:(void (^)(BOOL finished))completion {
+    _offset = x;
     CGPoint target = CGPointMake(x, 0);
+
     dispatch_async(dispatch_get_main_queue(), ^{
-        if (!animated) {
+        if (duration <= 0) {
             [self.scrollView setContentOffset:target animated:NO];
             if (completion) {
                 completion(YES);
@@ -134,8 +129,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
             return;
         }
 
-        // We use animateWithDuration here because UIScrollView doesn't let you control its deceleration rate.
-        [UIView animateWithDuration:kFSCSwipeCellAnimationDuration
+        [UIView animateWithDuration:duration
                          animations:^{
                              [self.scrollView setContentOffset:target animated:NO];
                          }
@@ -154,6 +148,20 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
                          }];
     });
 }
+
+- (void)setRightView:(UIView *)view {
+    if (view == _rightView) return;
+    if (_rightView) [_rightView removeFromSuperview];
+    _rightView = view;
+    [self updateContentInset];
+
+    if (view) {
+        view.frame = CGRectMake(0, 0, self.scrollView.bounds.size.width, self.scrollView.bounds.size.height);
+        [self insertSubview:view atIndex:0];
+    }
+}
+
+#pragma mark Private methods
 
 - (void)updateContentInset {
     CGFloat width = self.scrollView.bounds.size.width;
@@ -261,22 +269,23 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     }
 
     if (resetOffset) {
-        // Update the scroll view and notify the delegate if relevant.
-        FSCSwipeCellSide side = self.currentSide;
-        [self swipeToOffset:(side * width) animated:YES completion:^(BOOL finished) {
-            if (finished && self.currentSide == FSCSwipeCellSideNone && x != 0) {
-                if ([self.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
-                    [self.delegate swipeCell:self didHideSide:(x < 0 ? FSCSwipeCellSideLeft : FSCSwipeCellSideRight)];
-                }
-            }
-        }];
+	// Update the view and notify the delegate if relevant.
+	FSCSwipeCellSide side = self.currentSide;
+	__weak FSCSwipeCell *cell = self;
+	[self setOffset:(side * width) completion:^(BOOL finished) {
+	    if (finished && cell.currentSide == FSCSwipeCellSideNone && x != 0) {
+		if ([cell.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
+		    [cell.delegate swipeCell:cell didHideSide:(x < 0 ? FSCSwipeCellSideLeft : FSCSwipeCellSideRight)];
+		}
+	    }
+	}];
     }
 }
 
 #pragma mark UITableViewCell
 
 - (void)prepareForReuse {
-    [self setCurrentSide:FSCSwipeCellSideNone animated:NO];
+    [self setCurrentSide:FSCSwipeCellSideNone duration:0];
 }
 
 #pragma mark UIView
