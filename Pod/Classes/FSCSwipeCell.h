@@ -20,6 +20,12 @@ typedef NS_ENUM(NSInteger, FSCSwipeCellSide) {
 extern CGFloat const kFSCSwipeCellAnimationDuration;
 
 /**
+ * The magnitude with which to reduce the swipe distance when there is no view to show under
+ * the cell.
+ */
+extern CGFloat const kFSCSwipeCellBounceElasticity;
+
+/**
  * How many points the user has to swipe the cell in a direction to open when the user lets
  * go of the cell.
  */
@@ -39,18 +45,22 @@ extern CGFloat const kFSCSwipeCellOpenVelocityThreshold;
 @protocol FSCSwipeCellDelegate <NSObject>
 
 @optional
+
 /**
  * Called when the left/right side view of the cell is no longer visible.
  */
 - (void)swipeCell:(FSCSwipeCell *)cell didHideSide:(FSCSwipeCellSide)side;
+
 /**
  * Called whenever the cell is being swiped by the user.
  */
 - (void)swipeCell:(FSCSwipeCell *)cell didSwipe:(CGFloat)distance side:(FSCSwipeCellSide)side;
+
 /**
  * Called before a left/right side view is shown, allowing the swipe to be ignored.
  */
 - (BOOL)swipeCell:(FSCSwipeCell *)cell shouldShowSide:(FSCSwipeCellSide)side;
+
 /**
  * Called when the current side of the cell changes. This will be called before animations
  * complete.
@@ -67,34 +77,37 @@ extern CGFloat const kFSCSwipeCellOpenVelocityThreshold;
  * the action will be triggered; otherwise, the cell will just bounce back to its default
  * state.
  */
-@interface FSCSwipeCell : UITableViewCell <UIScrollViewDelegate>
+@interface FSCSwipeCell : UITableViewCell
 
 /**
  * The currently shown side of the cell. Note that this value will change before the animation
  * finishes.
  */
 @property (nonatomic) FSCSwipeCellSide currentSide;
+
 /**
  * An optional delegate which will be notified whenever the user interacts with the cell.
  */
 @property (nonatomic, weak) id<FSCSwipeCellDelegate> delegate;
+
 /**
  * The view to display when the cell is swiped from left to right. Setting this value will put
  * the specified view as a subview of this cell. Removing that view from this cell will reset
  * this value to nil.
  */
 @property (nonatomic, strong) UIView *leftView;
+
+/**
+ * The gesture recognizer that handles swiping the cell left and right.
+ */
+@property (nonatomic, readonly, strong) UIPanGestureRecognizer *panGestureRecognizer;
+
 /**
  * The view to display when the cell is swiped from right to left. Setting this value will put
  * the specified view as a subview of this cell. Removing that view from this cell will reset
  * this value to nil.
  */
 @property (nonatomic, strong) UIView *rightView;
-/**
- * The scroll view which enables the content of the cell to move left and right over the
- * subviews.
- */
-@property (nonatomic, readonly, strong) UIScrollView *scrollView;
 
 /**
  * Sets the current side of the cell, with control over animation. By default, the side change
