@@ -83,6 +83,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     _leftView = view;
 
     if (view) {
+        view.hidden = self.currentSide != FSCSwipeCellSideLeft;
         view.frame = CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height);
         [self insertSubview:view atIndex:0];
     }
@@ -139,6 +140,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     _rightView = view;
 
     if (view) {
+        view.hidden = self.currentSide != FSCSwipeCellSideRight;
         view.frame = CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height);
         [self insertSubview:view atIndex:0];
     }
