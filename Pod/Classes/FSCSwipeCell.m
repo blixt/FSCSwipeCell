@@ -340,7 +340,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
         }
     }
 
-    return YES;
+    return [other isKindOfClass:[UIPanGestureRecognizer class]];
 }
 
 #pragma mark UITableViewCell
