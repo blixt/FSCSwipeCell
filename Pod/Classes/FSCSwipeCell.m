@@ -73,6 +73,17 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
         return;
     }
 
+    CGFloat width = self.bounds.size.width;
+
+    if (side != FSCSwipeCellSideNone && [self.delegate respondsToSelector:@selector(swipeCell:shouldShowSide:)]) {
+        // Ask the delegate if the side should show.
+        if (![self.delegate swipeCell:self shouldShowSide:side]) {
+            // Reset the offset in case the cell has been swiped.
+            [self setOffset:(width * _currentSide) duration:0];
+            return;
+        }
+    }
+
     FSCSwipeCellSide previousSide = _currentSide;
     _currentSide = side;
 
@@ -83,7 +94,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
     // Update the view and notify the delegate if relevant.
     __weak FSCSwipeCell *cell = self;
-    [self setOffset:(self.bounds.size.width * side) duration:duration completion:^(BOOL finished) {
+    [self setOffset:(width * side) duration:duration completion:^(BOOL finished) {
         if (finished && side == FSCSwipeCellSideNone && [cell.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
             [cell.delegate swipeCell:cell didHideSide:previousSide];
         }
