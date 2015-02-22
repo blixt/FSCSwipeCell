@@ -13,7 +13,6 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
 @property (nonatomic, strong) CADisplayLink *displayLink;
 @property (nonatomic) CFAbsoluteTime lastPanEventTime;
-@property (nonatomic) FSCSwipeCellSide lastShownSide;
 @property (nonatomic, strong) UIPanGestureRecognizer *panGestureRecognizer;
 @property (nonatomic, strong) UIView *wrapper;
 
@@ -75,8 +74,8 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
     CGFloat width = self.bounds.size.width;
 
+    // Ask the delegate if the side should show.
     if (side != FSCSwipeCellSideNone && [self.delegate respondsToSelector:@selector(swipeCell:shouldShowSide:)]) {
-        // Ask the delegate if the side should show.
         if (![self.delegate swipeCell:self shouldShowSide:side]) {
             // Reset the offset in case the cell has been swiped.
             [self setOffset:(width * _currentSide) duration:0];
@@ -84,7 +83,6 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
         }
     }
 
-    FSCSwipeCellSide previousSide = _currentSide;
     _currentSide = side;
 
     // Let the delegate know that the side changed.
@@ -93,12 +91,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     }
 
     // Update the view and notify the delegate if relevant.
-    __weak FSCSwipeCell *cell = self;
-    [self setOffset:(width * side) duration:duration completion:^(BOOL finished) {
-        if (finished && side == FSCSwipeCellSideNone && [cell.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
-            [cell.delegate swipeCell:cell didHideSide:previousSide];
-        }
-    }];
+    [self setOffset:(width * side) duration:duration];
 }
 
 - (void)setLeftView:(UIView *)view {
@@ -117,39 +110,88 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     [self setOffset:x duration:kFSCSwipeCellAnimationDuration completion:nil];
 }
 
-- (void)setOffset:(CGFloat)x completion:(void (^)(BOOL finished))completion {
-    [self setOffset:x duration:kFSCSwipeCellAnimationDuration completion:completion];
-}
-
 - (void)setOffset:(CGFloat)x duration:(NSTimeInterval)duration {
     [self setOffset:x duration:duration completion:nil];
 }
 
+- (void)setOffset:(CGFloat)x completion:(void (^)(BOOL finished))completion {
+    [self setOffset:x duration:kFSCSwipeCellAnimationDuration completion:completion];
+}
+
 - (void)setOffset:(CGFloat)x duration:(NSTimeInterval)duration completion:(void (^)(BOOL finished))completion {
+    // Determine which side is showing, and what side will show.
+    FSCSwipeCellSide previousSide = (_offset < 0 ? FSCSwipeCellSideLeft : (_offset > 0 ? FSCSwipeCellSideRight : FSCSwipeCellSideNone));
+    FSCSwipeCellSide side = (x < 0 ? FSCSwipeCellSideLeft : (x > 0 ? FSCSwipeCellSideRight : FSCSwipeCellSideNone));
+
+    // Handle sides changing.
+    if (side != previousSide && side != FSCSwipeCellSideNone && [self.delegate respondsToSelector:@selector(swipeCell:shouldShowSide:)]) {
+        // Ask the delegate if the side should show.
+        if (![self.delegate swipeCell:self shouldShowSide:side]) {
+            // Instantly reset the offset to 0.
+            x = 0;
+            side = FSCSwipeCellSideNone;
+            duration = 0;
+        }
+    }
+
+    // Update the underlying variable holding the offset.
     _offset = x;
 
     // Apply bounce.
     if ((x < 0 && !self.leftView) || (x > 0 && !self.rightView)) {
         x *= kFSCSwipeCellBounceElasticity;
     }
+
+    // Convenience block for resetting visibility and calling delegates and callbacks.
+    void (^done)(BOOL) = ^(BOOL finished){
+        if (x == 0) {
+            if (self.leftView) self.leftView.hidden = YES;
+            if (self.rightView) self.rightView.hidden = YES;
+        }
+
+        if (finished && side != previousSide && previousSide != FSCSwipeCellSideNone) {
+            if ([self.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
+                [self.delegate swipeCell:self didHideSide:previousSide];
+            }
+        }
+
+        if (completion) completion(finished);
+    };
+
     // Calculate the destination bounds.
     CGRect bounds = CGRectMake(x, 0, self.bounds.size.width, self.bounds.size.height);
 
     dispatch_async(dispatch_get_main_queue(), ^{
+        // Make the views visible if they need to be.
+        if (x < 0 && self.leftView) {
+            self.leftView.hidden = NO;
+        } else if (x > 0 && self.rightView) {
+            self.rightView.hidden = NO;
+        }
+
+        // Perform the change instantly if no duration was specified.
         if (duration <= 0) {
             self.wrapper.bounds = bounds;
-            if (completion) {
-                completion(YES);
+
+            // Let the delegate know that the cell was swiped.
+            if ([self.delegate respondsToSelector:@selector(swipeCell:didSwipe:side:)]) {
+                if ((side == FSCSwipeCellSideLeft && self.leftView) || (side == FSCSwipeCellSideRight && self.rightView)) {
+                    [self.delegate swipeCell:self didSwipe:fabs(x) side:side];
+                }
             }
+
+            done(YES);
             return;
         }
 
+        // Create a timer which will update the delegate every frame.
         if (self.displayLink) {
             [self.displayLink invalidate];
         }
         self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(frameTick:)];
         [self.displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 
+        // Animate the movement of the cell.
         [UIView animateWithDuration:duration
                          animations:^{
                              self.wrapper.bounds = bounds;
@@ -157,18 +199,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
                          completion:^(BOOL finished) {
                              [self.displayLink invalidate];
                              self.displayLink = nil;
-
-                             if (self.leftView && self.currentSide != FSCSwipeCellSideLeft) {
-                                 self.leftView.hidden = YES;
-                             }
-
-                             if (self.rightView && self.currentSide != FSCSwipeCellSideRight) {
-                                 self.rightView.hidden = YES;
-                             }
-
-                             if (completion) {
-                                 completion(finished);
-                             }
+                             done(finished);
                          }];
     });
 }
@@ -209,48 +240,13 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
                     return;
                 }
                 FSCSwipeCellCurrentSwipingCell = self;
-                self.lastShownSide = self.currentSide;
             }
-
-            // Position the left/right views under the content view.
-            CGRect frame = CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height);
-            if (self.leftView) self.leftView.frame = frame;
-            if (self.rightView) self.rightView.frame = frame;
 
             // Intentional fall-through of control.
         case UIGestureRecognizerStateChanged:
-        {
-            // Determine which side is showing.
-            FSCSwipeCellSide side = (x < 0 ? FSCSwipeCellSideLeft : (x > 0 ? FSCSwipeCellSideRight : FSCSwipeCellSideNone));
-            // Handle sides changing.
-            if (side != self.lastShownSide) {
-                if (side != FSCSwipeCellSideNone && [self.delegate respondsToSelector:@selector(swipeCell:shouldShowSide:)]) {
-                    // Ask the delegate if the side should show.
-                    if (![self.delegate swipeCell:self shouldShowSide:side]) {
-                        // Don't allow swiping of the cell (but keep the gesture active).
-                        [self setOffset:0 duration:0];
-                        return;
-                    }
-                }
-                self.lastShownSide = side;
-            }
-
-            // Update the visibility of the left/right swipe views.
-            if (self.leftView) self.leftView.hidden = (x >= 0);
-            if (self.rightView) self.rightView.hidden = (x <= 0);
-
             // Move the cell content instantly.
             [self setOffset:x duration:0];
-
-            // Let the delegate know that the cell was swiped.
-            if ([self.delegate respondsToSelector:@selector(swipeCell:didSwipe:side:)]) {
-                if ((side == FSCSwipeCellSideLeft && self.leftView) || (side == FSCSwipeCellSideRight && self.rightView)) {
-                    [self.delegate swipeCell:self didSwipe:fabs(x) side:side];
-                }
-            }
-
             break;
-        }
         case UIGestureRecognizerStateEnded:
         {
             // Reduce the velocity based on how long has passed since the user dragged.
@@ -277,10 +273,8 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
                 case FSCSwipeCellSideNone:
                     // Open the relevant side (if it has a style and the user swiped beyond the threshold).
                     if (self.leftView && ((x <= 0 && goingRight) || (x < -kFSCSwipeCellOpenDistanceThreshold && !goingLeft))) {
-                        self.leftView.hidden = NO;
                         self.currentSide = FSCSwipeCellSideLeft;
                     } else if (self.rightView && ((x >= 0 && goingLeft) || (x > kFSCSwipeCellOpenDistanceThreshold && !goingRight))) {
-                        self.rightView.hidden = NO;
                         self.currentSide = FSCSwipeCellSideRight;
                     } else {
                         resetOffset = YES;
@@ -297,16 +291,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
             }
 
             if (resetOffset) {
-                // Update the view and notify the delegate if relevant.
-                FSCSwipeCellSide side = self.currentSide;
-                __weak FSCSwipeCell *cell = self;
-                [self setOffset:(side * width) completion:^(BOOL finished) {
-                    if (finished && cell.currentSide == FSCSwipeCellSideNone && x != 0) {
-                        if ([cell.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
-                            [cell.delegate swipeCell:cell didHideSide:(x < 0 ? FSCSwipeCellSideLeft : FSCSwipeCellSideRight)];
-                        }
-                    }
-                }];
+                self.offset = self.currentSide * width;
             }
 
             break;
@@ -372,6 +357,16 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 }
 
 #pragma mark UIView
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+
+    // Update the left/right view layouts.
+    CGRect frame = CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height);
+    if (self.leftView) self.leftView.frame = frame;
+    if (self.rightView) self.rightView.frame = frame;
+
+}
 
 - (void)willRemoveSubview:(UIView *)subview {
     if (_leftView == subview) _leftView = nil;
