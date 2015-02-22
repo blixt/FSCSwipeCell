@@ -1,7 +1,7 @@
 #import "FSCSwipeCell.h"
 
-NSTimeInterval const kFSCSwipeCellAnimationDuration = 0.15;
-CGFloat const kFSCSwipeCellBounceElasticity = 0.3;
+NSTimeInterval const kFSCSwipeCellAnimationDuration = 0.1;
+CGFloat const kFSCSwipeCellBounceElasticity = 0.2;
 CGFloat const kFSCSwipeCellOpenDistanceThreshold = 75;
 CGFloat const kFSCSwipeCellOpenVelocityThreshold = 500;
 
