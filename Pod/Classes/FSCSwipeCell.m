@@ -277,8 +277,10 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
                 case FSCSwipeCellSideNone:
                     // Open the relevant side (if it has a style and the user swiped beyond the threshold).
                     if (self.leftView && ((x <= 0 && goingRight) || (x < -kFSCSwipeCellOpenDistanceThreshold && !goingLeft))) {
+                        self.leftView.hidden = NO;
                         self.currentSide = FSCSwipeCellSideLeft;
                     } else if (self.rightView && ((x >= 0 && goingLeft) || (x > kFSCSwipeCellOpenDistanceThreshold && !goingRight))) {
+                        self.rightView.hidden = NO;
                         self.currentSide = FSCSwipeCellSideRight;
                     } else {
                         resetOffset = YES;
