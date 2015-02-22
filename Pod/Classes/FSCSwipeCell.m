@@ -112,6 +112,10 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 - (void)setOffset:(CGFloat)x duration:(NSTimeInterval)duration completion:(void (^)(BOOL finished))completion {
     _offset = x;
 
+    // Apply bounce.
+    if ((x < 0 && !self.leftView) || (x > 0 && !self.rightView)) {
+        x *= kFSCSwipeCellBounceElasticity;
+    }
     // Calculate the destination bounds.
     CGRect bounds = CGRectMake(x, 0, self.bounds.size.width, self.bounds.size.height);
 
