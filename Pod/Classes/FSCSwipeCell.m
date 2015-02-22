@@ -52,6 +52,9 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     [contentView removeFromSuperview];
     [_wrapper addSubview:contentView];
 
+    // Remove the white background color from the cell itself.
+    self.backgroundColor = [UIColor clearColor];
+
     // Make the content view white since it can now uncover things behind it.
     contentView.backgroundColor = [UIColor whiteColor];
 }
