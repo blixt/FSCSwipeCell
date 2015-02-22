@@ -316,7 +316,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
 - (BOOL)gestureRecognizerShouldBegin:(UIPanGestureRecognizer *)recognizer {
     if (recognizer != self.panGestureRecognizer) {
-        if ([[self superclass] instancesRespondToSelector:@selector(gestureRecognizerShouldBegin:)]) {
+        if ([[FSCSwipeCell superclass] instancesRespondToSelector:@selector(gestureRecognizerShouldBegin:)]) {
             return [super gestureRecognizerShouldBegin:recognizer];
         } else {
             return YES;
@@ -330,7 +330,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
 - (BOOL)gestureRecognizer:(UIPanGestureRecognizer *)recognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)other {
     if (recognizer != self.panGestureRecognizer) {
-        if ([[self superclass] instancesRespondToSelector:@selector(gestureRecognizer:shouldBeRequiredToFailByGestureRecognizer:)]) {
+        if ([[FSCSwipeCell superclass] instancesRespondToSelector:@selector(gestureRecognizer:shouldBeRequiredToFailByGestureRecognizer:)]) {
             return [super gestureRecognizer:recognizer shouldBeRequiredToFailByGestureRecognizer:other];
         } else {
             return NO;
