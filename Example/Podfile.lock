@@ -4,7 +4,7 @@ PODS:
     - Expecta
     - FBSnapshotTestCase
   - FBSnapshotTestCase (1.5)
-  - FSCSwipeCell (0.1.1)
+  - FSCSwipeCell (0.1.2)
   - Specta (0.3.0.beta1)
 
 DEPENDENCIES:
@@ -30,7 +30,7 @@ SPEC CHECKSUMS:
   Expecta: ee641011fe10aa1855d487b40e4976dac50ec342
   Expecta+Snapshots: 4a56b9411c6ed156987072e52c39de67d864015a
   FBSnapshotTestCase: e2914fbaabccea1dcc773d6a16b1c24540642488
-  FSCSwipeCell: 4605d4716a55fe57f82a69d92c46518cd743cf57
+  FSCSwipeCell: 9eb8e3260b434538d12b321970ca996ff85f4c90
   Specta: d2158a483ad179e5f8d3a29f75ff4fc0ff6fab16
 
 COCOAPODS: 0.36.0.beta.2
