@@ -220,7 +220,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
             // Let the delegate know that the cell was swiped.
             if ([self.delegate respondsToSelector:@selector(swipeCell:didSwipe:side:)]) {
                 if ((side == FSCSwipeCellSideLeft && self.leftView) || (side == FSCSwipeCellSideRight && self.rightView)) {
-                    [self.delegate swipeCell:self didSwipe:abs(x) side:side];
+                    [self.delegate swipeCell:self didSwipe:fabs(x) side:side];
                 }
             }
 
@@ -307,7 +307,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
     CGPoint translation = [recognizer translationInView:self];
     // Fail vertical swipes.
-    return (abs(translation.y) < abs(translation.x));
+    return (fabs(translation.y) < fabs(translation.x));
 }
 
 - (BOOL)gestureRecognizer:(UIPanGestureRecognizer *)recognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)other {
