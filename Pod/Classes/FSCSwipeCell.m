@@ -325,7 +325,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
     CGPoint translation = [recognizer translationInView:self];
     // Fail vertical swipes.
-    return (fabs(translation.y) < fabs(translation.x));
+    return (fabs(translation.y) <= fabs(translation.x));
 }
 
 - (BOOL)gestureRecognizer:(UIPanGestureRecognizer *)recognizer shouldBeRequiredToFailByGestureRecognizer:(UIGestureRecognizer *)other {
