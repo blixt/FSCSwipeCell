@@ -38,6 +38,44 @@
                                                    @"Homer Simpson", @"John Connor", @"Arya Stark", @"Captain Kirk", nil];
 }
 
+#pragma mark Private methods
+
+- (void)displaySnoozeMenuForCell:(FSCSwipeCell *)cell {
+    UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Snooze"
+                                                                   message:@"How long do you want to snooze?"
+                                                            preferredStyle:UIAlertControllerStyleActionSheet];
+
+    // This is only used by iPad.
+    UIPopoverPresentationController *popover = alert.popoverPresentationController;
+    if (popover) {
+        popover.sourceView = cell;
+        popover.sourceRect = cell.bounds;
+        popover.permittedArrowDirections = UIPopoverArrowDirectionAny;
+    }
+
+    // This is the block that we will run if the user picks an option.
+    void (^remove)(UIAlertAction *) = ^void(UIAlertAction *action) {
+        // Don't do this at home, kids.
+        NSUInteger index = [self.labels indexOfObject:cell.textLabel.text];
+        // Remove the row from view.
+        [self.labels removeObjectAtIndex:index];
+        [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:index inSection:0]]
+                              withRowAnimation:UITableViewRowAnimationAutomatic];
+    };
+
+    [alert addAction:[UIAlertAction actionWithTitle:@"5 minutes" style:UIAlertActionStyleDefault handler:remove]];
+    [alert addAction:[UIAlertAction actionWithTitle:@"One hour" style:UIAlertActionStyleDefault handler:remove]];
+    [alert addAction:[UIAlertAction actionWithTitle:@"Until tomorrow" style:UIAlertActionStyleDefault handler:remove]];
+
+    // If the user cancels, simply reset the cell.
+    [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
+        // This line is the only FSCSwipeCell-related code for snoozing. It will "close" the open cell.
+        cell.currentSide = FSCSwipeCellSideNone;
+    }]];
+
+    [self presentViewController:alert animated:YES completion:nil];
+}
+
 #pragma mark FSCSwipeCellDelegate
 
 - (void)swipeCell:(FSCSwipeCell *)cell didSwipe:(CGFloat)distance side:(FSCSwipeCellSide)side {
@@ -76,43 +114,9 @@
         case FSCSwipeCellSideNone:
             break;
         case FSCSwipeCellSideRight:
-        {
-            // Show the snooze menu (all the code below but one line is for showing the iOS alert).
-            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Snooze"
-                                                                           message:@"How long do you want to snooze?"
-                                                                    preferredStyle:UIAlertControllerStyleActionSheet];
-
-            // This is only used by iPad.
-            UIPopoverPresentationController *popover = alert.popoverPresentationController;
-            if (popover) {
-                popover.sourceView = cell;
-                popover.sourceRect = cell.bounds;
-                popover.permittedArrowDirections = UIPopoverArrowDirectionAny;
-            }
-
-            // This is the block that we will run if the user picks an option.
-            void (^remove)(UIAlertAction *) = ^void(UIAlertAction *action) {
-                // Don't do this at home, kids.
-                NSUInteger index = [self.labels indexOfObject:cell.textLabel.text];
-                // Remove the row from view.
-                [self.labels removeObjectAtIndex:index];
-                [self.tableView deleteRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:index inSection:0]]
-                                      withRowAnimation:UITableViewRowAnimationAutomatic];
-            };
-
-            [alert addAction:[UIAlertAction actionWithTitle:@"5 minutes" style:UIAlertActionStyleDefault handler:remove]];
-            [alert addAction:[UIAlertAction actionWithTitle:@"One hour" style:UIAlertActionStyleDefault handler:remove]];
-            [alert addAction:[UIAlertAction actionWithTitle:@"Until tomorrow" style:UIAlertActionStyleDefault handler:remove]];
-
-            // If the user cancels, simply reset the cell.
-            [alert addAction:[UIAlertAction actionWithTitle:@"Cancel" style:UIAlertActionStyleCancel handler:^(UIAlertAction *action) {
-                // This line is the only FSCSwipeCell-related code for snoozing. It will "close" the open cell.
-                cell.currentSide = FSCSwipeCellSideNone;
-            }]];
-
-            [self presentViewController:alert animated:YES completion:nil];
+            // Show the snooze menu.
+            [self displaySnoozeMenuForCell:cell];
             break;
-        }
     }
 }
 
