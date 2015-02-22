@@ -11,6 +11,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
 @interface FSCSwipeCell ()
 
+@property (nonatomic, strong) CADisplayLink *displayLink;
 @property (nonatomic) CFAbsoluteTime lastPanEventTime;
 @property (nonatomic) FSCSwipeCellSide lastShownSide;
 @property (nonatomic, strong) UIPanGestureRecognizer *panGestureRecognizer;
@@ -128,11 +129,20 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
             return;
         }
 
+        if (self.displayLink) {
+            [self.displayLink invalidate];
+        }
+        self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(frameTick:)];
+        [self.displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+
         [UIView animateWithDuration:duration
                          animations:^{
                              self.wrapper.bounds = bounds;
                          }
                          completion:^(BOOL finished) {
+                             [self.displayLink invalidate];
+                             self.displayLink = nil;
+
                              if (self.leftView && self.currentSide != FSCSwipeCellSideLeft) {
                                  self.leftView.hidden = YES;
                              }
@@ -292,6 +302,14 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
             return;
     }
     self.lastPanEventTime = CFAbsoluteTimeGetCurrent();
+}
+
+- (void)frameTick:(CADisplayLink *)sender {
+    CALayer *layer = self.wrapper.layer.presentationLayer;
+    CGFloat x = layer.bounds.origin.x;
+    if (x != 0 && [self.delegate respondsToSelector:@selector(swipeCell:didSwipe:side:)]) {
+        [self.delegate swipeCell:self didSwipe:fabs(x) side:(x < 0 ? FSCSwipeCellSideLeft : FSCSwipeCellSideRight)];
+    }
 }
 
 #pragma mark UIGestureRecognizerDelegate

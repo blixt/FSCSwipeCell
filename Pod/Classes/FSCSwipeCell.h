@@ -1,3 +1,4 @@
+#import <QuartzCore/QuartzCore.h>
 #import <UIKit/UIKit.h>
 
 @class FSCSwipeCell;
