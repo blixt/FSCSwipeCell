@@ -45,6 +45,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     // Create a wrapper view which will change its bounds to move the content view left/right.
     _wrapper = [[UIView alloc] initWithFrame:self.bounds];
     _wrapper.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+    _wrapper.userInteractionEnabled = NO;
     [self addSubview:_wrapper];
 
     // Move the content view into the wrapper.
