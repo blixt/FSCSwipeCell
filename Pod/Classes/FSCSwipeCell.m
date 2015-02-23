@@ -129,15 +129,11 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
     // Convenience block for resetting visibility and calling delegates and callbacks.
     void (^done)(BOOL) = ^(BOOL finished){
-        if (self.leftView && side != FSCSwipeCellSideLeft) self.leftView.hidden = YES;
-        if (self.rightView && side != FSCSwipeCellSideRight) self.rightView.hidden = YES;
-
         if (finished && side != previousSide && previousSide != FSCSwipeCellSideNone) {
             if ([self.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
                 [self.delegate swipeCell:self didHideSide:previousSide];
             }
         }
-
         if (completion) completion(finished);
     };
 
@@ -155,14 +151,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
         // Perform the change instantly if no duration was specified.
         if (duration <= 0) {
             self.wrapper.bounds = bounds;
-
-            // Let the delegate know that the cell was swiped.
-            if ([self.delegate respondsToSelector:@selector(swipeCell:didSwipe:side:)]) {
-                if ((side == FSCSwipeCellSideLeft && self.leftView) || (side == FSCSwipeCellSideRight && self.rightView)) {
-                    [self.delegate swipeCell:self didSwipe:fabs(x) side:side];
-                }
-            }
-
+            [self reportOffset:x];
             done(YES);
             return;
         }
@@ -305,9 +294,15 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
 - (void)frameTick:(CADisplayLink *)sender {
     CALayer *layer = self.wrapper.layer.presentationLayer;
-    CGFloat x = layer.bounds.origin.x;
+    [self reportOffset:layer.bounds.origin.x];
+}
+
+- (void)reportOffset:(CGFloat)x {
+    FSCSwipeCellSide side = (x < 0 ? FSCSwipeCellSideLeft : (x > 0 ? FSCSwipeCellSideRight : FSCSwipeCellSideNone));
+    if (self.leftView) self.leftView.hidden = side != FSCSwipeCellSideLeft;
+    if (self.rightView) self.rightView.hidden = side != FSCSwipeCellSideRight;
     if (x != 0 && [self.delegate respondsToSelector:@selector(swipeCell:didSwipe:side:)]) {
-        [self.delegate swipeCell:self didSwipe:fabs(x) side:(x < 0 ? FSCSwipeCellSideLeft : FSCSwipeCellSideRight)];
+        [self.delegate swipeCell:self didSwipe:fabs(x) side:side];
     }
 }
 
