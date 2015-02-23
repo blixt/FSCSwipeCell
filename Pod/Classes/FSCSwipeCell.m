@@ -128,7 +128,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
         x *= kFSCSwipeCellBounceElasticity;
     }
 
-    // Convenience block for resetting visibility and calling delegates and callbacks.
+    // Convenience block for calling delegates and callbacks.
     void (^done)(BOOL) = ^(BOOL finished){
         if (finished && side != previousSide && previousSide != FSCSwipeCellSideNone) {
             if ([self.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
