@@ -145,10 +145,8 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
     // Convenience block for resetting visibility and calling delegates and callbacks.
     void (^done)(BOOL) = ^(BOOL finished){
-        if (x == 0) {
-            if (self.leftView) self.leftView.hidden = YES;
-            if (self.rightView) self.rightView.hidden = YES;
-        }
+        if (self.leftView && side != FSCSwipeCellSideLeft) self.leftView.hidden = YES;
+        if (self.rightView && side != FSCSwipeCellSideRight) self.rightView.hidden = YES;
 
         if (finished && side != previousSide && previousSide != FSCSwipeCellSideNone) {
             if ([self.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
