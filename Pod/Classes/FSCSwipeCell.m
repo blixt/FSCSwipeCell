@@ -227,6 +227,11 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
             self.swiping = YES;
 
+            // Notify the delegate that swiping has commenced.
+            if ([self.delegate respondsToSelector:@selector(swipeCellWillBeginSwiping:)]) {
+                [self.delegate swipeCellWillBeginSwiping:self];
+            }
+
             // Intentional fall-through of control.
         case UIGestureRecognizerStateChanged:
             // Move the cell content instantly.
@@ -279,6 +284,11 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
             if (resetOffset) {
                 self.offset = self.currentSide * width;
+            }
+
+            // Notify the delegate that swiping has ended.
+            if ([self.delegate respondsToSelector:@selector(swipeCellDidEndSwiping:)]) {
+                [self.delegate swipeCellDidEndSwiping:self];
             }
 
             break;

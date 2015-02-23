@@ -68,6 +68,16 @@ extern CGFloat const kFSCSwipeCellOpenVelocityThreshold;
  */
 - (void)swipeCellDidChangeCurrentSide:(FSCSwipeCell *)cell;
 
+/**
+ * Called when the user has stopped swiping the cell.
+ */
+- (void)swipeCellDidEndSwiping:(FSCSwipeCell *)cell;
+
+/**
+ * Called when the user began swiping the cell.
+ */
+- (void)swipeCellWillBeginSwiping:(FSCSwipeCell *)cell;
+
 @end
 
 #pragma mark - FSCSwipeCell
