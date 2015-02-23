@@ -67,32 +67,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 }
 
 - (void)setCurrentSide:(FSCSwipeCellSide)side duration:(NSTimeInterval)duration {
-    if (side == _currentSide) {
-        // No change needed. However, if an animation is in flight and this call has animated = NO, the animation
-        // will continue. We don't cancel the animation here because it could break the didHideSide delegate call.
-        return;
-    }
-
-    CGFloat width = self.bounds.size.width;
-
-    // Ask the delegate if the side should show.
-    if (side != FSCSwipeCellSideNone && [self.delegate respondsToSelector:@selector(swipeCell:shouldShowSide:)]) {
-        if (![self.delegate swipeCell:self shouldShowSide:side]) {
-            // Reset the offset in case the cell has been swiped.
-            [self setOffset:(width * _currentSide) duration:0];
-            return;
-        }
-    }
-
-    _currentSide = side;
-
-    // Let the delegate know that the side changed.
-    if ([self.delegate respondsToSelector:@selector(swipeCellDidChangeCurrentSide:)]) {
-        [self.delegate swipeCellDidChangeCurrentSide:self];
-    }
-
-    // Update the view and notify the delegate if relevant.
-    [self setOffset:(width * side) duration:duration];
+    [self setOffset:(self.bounds.size.width * side) duration:duration];
 }
 
 - (void)setLeftView:(UIView *)view {
@@ -137,6 +112,15 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
     // Update the underlying variable holding the offset.
     _offset = x;
+
+    // Update the current side when the cell is not being swiped.
+    if (!self.swiping && side != self.currentSide) {
+        _currentSide = side;
+        // Let the delegate know of side changes.
+        if ([self.delegate respondsToSelector:@selector(swipeCellDidChangeCurrentSide:)]) {
+            [self.delegate swipeCellDidChangeCurrentSide:self];
+        }
+    }
 
     // Apply bounce.
     if ((x < 0 && !self.leftView) || (x > 0 && !self.rightView)) {
@@ -348,7 +332,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 #pragma mark UITableViewCell
 
 - (void)prepareForReuse {
-    [self setCurrentSide:FSCSwipeCellSideNone duration:0];
+    [self setOffset:0 duration:0];
 }
 
 - (void)setSelected:(BOOL)selected animated:(BOOL)animated {
