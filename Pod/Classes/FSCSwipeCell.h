@@ -53,7 +53,7 @@ extern CGFloat const kFSCSwipeCellOpenVelocityThreshold;
 - (void)swipeCell:(FSCSwipeCell *)cell didHideSide:(FSCSwipeCellSide)side;
 
 /**
- * Called whenever the cell is being swiped by the user.
+ * Called whenever the offset changes (either by swiping or programmatically).
  */
 - (void)swipeCell:(FSCSwipeCell *)cell didSwipe:(CGFloat)distance side:(FSCSwipeCellSide)side;
 
@@ -114,6 +114,11 @@ extern CGFloat const kFSCSwipeCellOpenVelocityThreshold;
  * this value to nil.
  */
 @property (nonatomic, strong) UIView *rightView;
+
+/**
+ * Whether the cell is currently being swiped.
+ */
+@property (nonatomic, readonly) BOOL swiping;
 
 /**
  * Sets the current side of the cell, with control over animation. By default, the side change

@@ -14,6 +14,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 @property (nonatomic, strong) CADisplayLink *displayLink;
 @property (nonatomic) CFAbsoluteTime lastPanEventTime;
 @property (nonatomic, strong) UIPanGestureRecognizer *panGestureRecognizer;
+@property (nonatomic) BOOL swiping;
 @property (nonatomic, strong) UIView *wrapper;
 
 @end
@@ -242,6 +243,8 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
                 FSCSwipeCellCurrentSwipingCell = self;
             }
 
+            self.swiping = YES;
+
             // Intentional fall-through of control.
         case UIGestureRecognizerStateChanged:
             // Move the cell content instantly.
@@ -256,6 +259,8 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
             @synchronized([FSCSwipeCell class]) {
                 FSCSwipeCellCurrentSwipingCell = nil;
             }
+
+            self.swiping = NO;
 
             BOOL goingLeft = (velocity > kFSCSwipeCellOpenVelocityThreshold);
             BOOL goingRight = (velocity < -kFSCSwipeCellOpenVelocityThreshold);
