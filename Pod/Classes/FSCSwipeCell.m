@@ -142,13 +142,6 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     CGRect bounds = CGRectMake(x, 0, self.bounds.size.width, self.bounds.size.height);
 
     dispatch_async(dispatch_get_main_queue(), ^{
-        // Make the views visible if they need to be.
-        if (x < 0 && self.leftView) {
-            self.leftView.hidden = NO;
-        } else if (x > 0 && self.rightView) {
-            self.rightView.hidden = NO;
-        }
-
         // Perform the change instantly if no duration was specified.
         if (duration <= 0) {
             self.wrapper.bounds = bounds;
