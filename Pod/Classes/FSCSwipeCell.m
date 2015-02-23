@@ -67,6 +67,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 }
 
 - (void)setCurrentSide:(FSCSwipeCellSide)side duration:(NSTimeInterval)duration {
+    if (duration > 0 && side == _currentSide) return;
     [self setOffset:(self.bounds.size.width * side) duration:duration];
 }
 
