@@ -144,6 +144,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     dispatch_async(dispatch_get_main_queue(), ^{
         // Perform the change instantly if no duration was specified.
         if (duration <= 0) {
+            [self.wrapper.layer removeAllAnimations];
             self.wrapper.bounds = bounds;
             [self reportOffset:x];
             done(YES);
