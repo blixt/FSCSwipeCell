@@ -113,8 +113,8 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     // Update the underlying variable holding the offset.
     _offset = x;
 
-    // Update the current side when the cell is not being swiped.
-    if (!self.swiping && side != self.currentSide) {
+    // Update the current side if it's fully exposed and the cell is not being swiped.
+    if (!self.swiping && side != self.currentSide && x == side * self.bounds.size.width) {
         _currentSide = side;
         // Let the delegate know of side changes.
         if ([self.delegate respondsToSelector:@selector(swipeCellDidChangeCurrentSide:)]) {
