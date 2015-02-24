@@ -11,6 +11,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 
 @interface FSCSwipeCell ()
 
+@property (nonatomic) NSUInteger animationCount;
 @property (nonatomic, strong) CADisplayLink *displayLink;
 @property (nonatomic) CFAbsoluteTime lastPanEventTime;
 @property (nonatomic, strong) UIPanGestureRecognizer *panGestureRecognizer;
@@ -129,7 +130,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     }
 
     // Convenience block for calling delegates and callbacks.
-    void (^done)(BOOL) = ^(BOOL finished){
+    void (^done)(BOOL) = ^(BOOL finished) {
         if (finished && side != previousSide && previousSide != FSCSwipeCellSideNone) {
             if ([self.delegate respondsToSelector:@selector(swipeCell:didHideSide:)]) {
                 [self.delegate swipeCell:self didHideSide:previousSide];
@@ -159,14 +160,22 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
         [self.displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 
         // Animate the movement of the cell.
+        self.animationCount++;
         [UIView animateWithDuration:duration
+                              delay:0
+                            options:UIViewAnimationOptionBeginFromCurrentState | UIViewAnimationOptionCurveEaseOut
                          animations:^{
                              self.wrapper.bounds = bounds;
                          }
                          completion:^(BOOL finished) {
-                             [self.displayLink invalidate];
-                             self.displayLink = nil;
-                             done(finished);
+                             self.animationCount--;
+                             if (self.animationCount == 0) {
+                                 if (finished) {
+                                     [self.displayLink invalidate];
+                                     self.displayLink = nil;
+                                 }
+                                 done(finished);
+                             }
                          }];
     });
 }
@@ -352,7 +361,6 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     CGRect frame = CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height);
     if (self.leftView) self.leftView.frame = frame;
     if (self.rightView) self.rightView.frame = frame;
-
 }
 
 - (void)willRemoveSubview:(UIView *)subview {
