@@ -357,8 +357,9 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
 - (void)layoutSubviews {
     [super layoutSubviews];
 
-    // Update the left/right view layouts.
+    // Update the subview layouts.
     CGRect frame = CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height);
+    self.wrapper.frame = frame;
     if (self.leftView) self.leftView.frame = frame;
     if (self.rightView) self.rightView.frame = frame;
 }
