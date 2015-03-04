@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'FSCSwipeCell'
-  s.version          = '0.1.7'
+  s.version          = '0.1.8'
   s.summary          = 'A table view cell that can be swiped left and/or right to perform an action.'
   s.description      = <<-DESC
                        Table view cells of this class will reveal a colored area that represents an action when
