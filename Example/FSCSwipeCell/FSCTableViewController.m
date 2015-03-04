@@ -41,6 +41,19 @@
 #pragma mark Private methods
 
 - (void)displaySnoozeMenuForCell:(FSCSwipeCell *)cell {
+    if (![UIAlertController class]) {
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"Sorry!"
+                                                        message:@"This part of the demo doesn't work in iOS 7."
+                                                       delegate:nil
+                                              cancelButtonTitle:@"No problem"
+                                              otherButtonTitles:nil];
+        [alert show];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+            cell.currentSide = FSCSwipeCellSideNone;
+        });
+        return;
+    }
+
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Snooze"
                                                                    message:@"How long do you want to snooze?"
                                                             preferredStyle:UIAlertControllerStyleActionSheet];
