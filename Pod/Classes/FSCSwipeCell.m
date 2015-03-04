@@ -152,12 +152,14 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
             return;
         }
 
-        // Create a timer which will update the delegate every frame.
-        if (self.displayLink) {
-            [self.displayLink invalidate];
+        if (self.animationCount == 0) {
+            // Create a timer which will update the delegate every frame.
+            if (self.displayLink) {
+                [self.displayLink invalidate];
+            }
+            self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(frameTick:)];
+            [self.displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
         }
-        self.displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(frameTick:)];
-        [self.displayLink addToRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 
         // Animate the movement of the cell.
         self.animationCount++;
