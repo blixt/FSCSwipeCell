@@ -80,7 +80,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     if (view) {
         view.hidden = (self.offset >= 0);
         view.frame = CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height);
-        [self insertSubview:view belowSubview:self.wrapper];
+        [self.wrapper.superview insertSubview:view belowSubview:self.wrapper];
     }
 }
 
@@ -188,7 +188,7 @@ FSCSwipeCell *FSCSwipeCellCurrentSwipingCell;
     if (view) {
         view.hidden = (self.offset <= 0);
         view.frame = CGRectMake(0, 0, self.bounds.size.width, self.bounds.size.height);
-        [self insertSubview:view belowSubview:self.wrapper];
+        [self.wrapper.superview insertSubview:view belowSubview:self.wrapper];
     }
 }
 
